@@ -194,7 +194,7 @@ Hierarchical clustering is based on computing distances between samples and gene
 
  ![](figures/hierarchical.png) 
 
- <sub>Image credit: [Pawan Jain, Hierarchical clustering Clearly Explained. 2019.](https://towardsdatascience.com/https-towardsdatascience-com-hierarchical-clustering-6f3c98c9d0ca)  </sub>  
+ <sub>Image credit: [Unsupervised Clustering Analysis, 2018.](http://www.statsoft.org/wp-content/uploads/2018Stat3612/Tutorials/Tutorial12_Unsupervised.html)  </sub>  
 
 We will use agglomerative approach in our examples. scikit package also only uses agglomerative clustering. 
 
@@ -204,6 +204,19 @@ We will use agglomerative approach in our examples. scikit package also only use
    ![](figures/dendogram.png) 
 
 <sub> Dendogram for agglomerative clustering of *Iris* dataset  </sub>  
+
+
+### Linkage methods
+
+
+Linkage method determines how the distance between clusters are computed. For instance, *single linkage* chooses the minimum distance between any two points in respective clusters as the cluster distance. 
+
+   ![](figures/linkage.png) 
+
+<sub> Image credit: [Van Steen et al. "Localisation and characterisation of corrosion damage in reinforced concrete by means of acoustic emission and X-ray computed tomography." Cons and Bui Mat, 2019.](https://doi.org/10.1016/j.conbuildmat.2018.11.159)</sub>  
+
+
+Documentations are your best friend! Take a look at [SciPy's hierarchical clustering documentation](https://docs.scipy.org/doc/scipy/reference/cluster.hierarchy.html) for other linkage methods median, ward and centroid. 
 
 
 ### Limitations
@@ -220,9 +233,20 @@ We will use agglomerative approach in our examples. scikit package also only use
 
 
 
+
 ## 2.3. Graph-based clustering
 
 ### Background
+
+ A *graph* comprises vertexes and edges that connect them to each other. Also known as *community detection*, graph-based clustering is based on identifying densely connected communities in a graph. In scRNA-seq, cells correspond to the vertexes and usually, k-Nearest Neighbor (k-NN) is used to connect $k$ neighbor (similar) cells together to construct a graph. The similarity can be determined by distance measures such as Euclidian, and preferably after dimensionality reduction. 
+
+> Most often, graphs and networks are used interchangebly in different contexts. When talking about graphs we use terminologies *vertex* and *edge* and when talking about networks we say *node* and *link*. Don't feel confused when you see node and edge together :) 
+
+#### Louvain algorithm
+
+
+#### Do you think there are other ways to connect cells on a graph?
+
 ### Limitations
 #### Practise 
 
@@ -230,6 +254,7 @@ We will use agglomerative approach in our examples. scikit package also only use
 
 #### Further reading
 
+   * Anything from [Albert-László Barabási](https://www.barabasilab.com) on networks!
 
 
 
