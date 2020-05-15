@@ -51,7 +51,7 @@ Principal components analysis is an unsupervised linear projection technique tha
    * The PCs are the eigenvectors of the covariance matrix with the largest eigenvalues. 
 
 
-    <img src="figures/pcs.png" width="300" height="300" align="center" /> 
+  <img src="figures/pcs.png" width="300" height="300" align="center" /> 
     
    The first PC component should capture the largest variation across samples, the second PC should capture the remaining largest variation and be uncorrelated with the previous PC and so on. Thus, we can think of the PCs as geometrically orthogonal [[3]](http://fortinlab.bio.uci.edu/FortinLab/Teaching_files/Stats/POS_Principal_component_analysis.pdf). 
 
