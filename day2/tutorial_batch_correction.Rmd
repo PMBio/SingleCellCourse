@@ -1,0 +1,73 @@
+---
+title: "Batch correctionusing Seurat"
+author: "Britta Velten"
+date: "5/26/2020"
+output: html_document
+---
+
+Following the tutorial provided by Seurat we will integrate human pancreatic islet cells profiled by different technologies.
+
+# Getting the data
+```{r, warning=FALSE, message=FALSE}
+library(Seurat)
+library(SeuratData)
+```
+
+```{r}
+# InstallData("panc8")
+data("panc8")
+pancreas.list <- SplitObject(panc8, split.by = "tech")
+pancreas.list <- pancreas.list[c("celseq", "celseq2", "fluidigmc1", "smartseq2")]
+```
+
+# Just for illustration: Data without integration
+```{r}
+panc8 <- NormalizeData(panc8)
+panc8 <- FindVariableFeatures(panc8)
+panc8 <- ScaleData(panc8)
+panc8 <- RunPCA(panc8, npcs = 30, verbose = FALSE)
+panc8 <- RunUMAP(panc8, reduction = "pca", dims = 1:30)
+DimPlot(panc8, group.by = "tech", reduction = "umap")
+DimPlot(panc8, group.by ="celltype", reduction = "umap")
+```
+
+# Data normalization
+```{r}
+for (i in 1:length(pancreas.list)) {
+    pancreas.list[[i]] <- NormalizeData(pancreas.list[[i]], verbose = FALSE)
+    pancreas.list[[i]] <- FindVariableFeatures(pancreas.list[[i]], selection.method = "vst", 
+        nfeatures = 2000, verbose = FALSE)
+}
+```
+
+# Integration
+```{r}
+reference.list <- pancreas.list[c("celseq", "celseq2", "smartseq2")]
+pancreas.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 1:30)
+```
+
+```{r}
+pancreas.integrated <- IntegrateData(anchorset = pancreas.anchors, dims = 1:30)
+```
+
+# Plotting after integration
+
+```{r}
+library(ggplot2)
+library(cowplot)
+library(patchwork)
+# switch to integrated assay. The variable features of this assay are automatically
+# set during IntegrateData
+DefaultAssay(pancreas.integrated) <- "integrated"
+
+# Run the standard workflow for visualization and clustering
+pancreas.integrated <- ScaleData(pancreas.integrated, verbose = FALSE)
+pancreas.integrated <- RunPCA(pancreas.integrated, npcs = 30, verbose = FALSE)
+pancreas.integrated <- RunUMAP(pancreas.integrated, reduction = "pca", dims = 1:30)
+p1 <- DimPlot(pancreas.integrated, reduction = "umap", group.by = "tech")
+p2 <- DimPlot(pancreas.integrated, reduction = "umap", group.by = "celltype", label = TRUE, 
+    repel = TRUE) + NoLegend()
+p1 + p2
+```
+
+
