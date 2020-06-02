@@ -1,0 +1,370 @@
+---
+title: "01_Data_overview"
+author: "Max Frank"
+date: "5/28/2020"
+output: html_document
+---
+First we need to download the data. We provide a subset of the full raw data. It is about 2.6 GB in size. Please set your working directory to where you stored this vignette and make sure that enough disk space is available.
+```{r}
+system("curl ...")
+system("unzip gastrulation_data.zip -d gastrulation_data")
+```
+
+
+First we load all necessary libraries.
+
+```{r, echo=FALSE}
+library(data.table)
+library(SingleCellExperiment)
+library(dplyr)
+library(scran)
+library(ggplot2)
+library(scater)
+library(umap)
+library(MOFA)
+```
+
+# Introduction
+
+As you have heard scNMT-seq allows the simultaneous profiling of transcriptome, methylome and chromatin accessibility in a single cell. We will now see how such a dataset can be analyzed in practice. 
+
+In particular we will be working with the data from the following study: [Multi-omics profiling of mouse gastrulation at single-cell resolution](https://www.nature.com/articles/s41586-019-1825-8). This study sequenced mouse embryonic stem cells as they undergo the process of gastrulation, during which the three primary germ layers are formed. 
+
+Later on we will use MOFA to analyze the three layers together, but in this tutorial we just want to get an overview of each layer separately. This should  make it clear how the data of each layer looks like and how each of the layers changes over the course of mouse development. We will also reproduce some of the panels in Figure 1 of the paper. Note that the plots will not exactly match the figures since we are using slightly different tools and preprocessing strategies.
+
+# Data analysis
+
+## Pre-processing
+
+The first step in every single-cell experiment is to get the data into a usable format and to do quality control. Since these steps can often be quite resource intensive, we already provide preprocessed data for you. If you are interested in the preprocessing you can have a look at the [full analysis folder of the paper](https://github.com/rargelaguet/scnmt_gastrulation). You can also find links to the full data there. Here we provide you with a metadata file that will give an overview of the quality control and links samples across the different layers. Please have a look at the metadata table.
+
+```{r}
+metadata <- fread("gastrulation_data/sample_metadata_filtered.txt")
+metadata
+```
+
+Note that every cell already has annotations for the lineage (`lineage10x_2`) it belongs to and a `stage` column. The stage column corresponds to the embryonic day the cells were sequenced, whereas the lineage labels come from a mapping to  an extensive (100.000 cells) 10X single-cell RNA-seq atlas that annotated these celltypes. For more informations on the mapping please have a look in the methods section of the paper and also check out the mouse gastrulation atlas [here](https://www.nature.com/articles/s41586-019-0933-9). 
+
+## RNA layer
+
+### Data cleaning and Dimensionality reduction
+
+The RNA data is stored in a single cell experiment object that we will use for further analysis.
+
+```{r, echo=FALSE}
+sce <- readRDS("gastrulation_data/rna/SingleCellExperiment_filtered.rds")
+sce
+```
+
+We use `scran` to identify highly variable genes.
+
+```{r}
+# trend = scran::fitTrendVar(sce, use.spikes = FALSE, loess.args = list(span = 0.05))
+# decomp = scran::decomposeVar(sce, fit = trend)
+# decomp = decomp[decomp$mean > 1,]
+# decomp$FDR = p.adjust(decomp$p.value, method = "fdr")
+# genes <- rownames(decomp)[decomp$p.value < 0.05]
+# sce <- sce[genes,]
+```
+```{r}
+trendvar <- modelGeneVar(sce, min.mean = 1, parametric=FALSE, span = 0.05)
+genes <- rownames(trendvar[which(trendvar$FDR < 0.1),])
+sce_hv <- sce[genes,]
+```
+
+We will also center and scale the data to remove library size effects.
+
+```{r}
+logcounts_scaled <- scale(t(logcounts(sce_hv)), center = T, scale = F)
+```
+
+Now we can perform dimensionality reduction by PCA followed by UMAP.
+```{r}
+pca <- irlba::prcomp_irlba(logcounts_scaled, n = 10)
+
+# The first PC corresponds to the number of genes expresed, we simply remove it
+reducedDims(sce_hv) <- list(PCA = pca$x[, 2:ncol(pca$x)])
+
+```
+
+```{r}
+set.seed(42) # Needed for consistency of umap results
+sce_hv <- runUMAP(sce_hv, dimred="PCA", n_neighbors=20, min_dist=0.7)
+
+```
+
+```{r, echo=FALSE}
+to.plot <- reducedDims(sce_hv)$UMAP %>% as.data.table %>% .[,id_rna:=colnames(sce_hv)] %>%
+    merge(metadata, by="id_rna")
+p <- ggplot(to.plot, aes(x=V1,y=V2)) +
+  geom_point(aes(color = stage), alpha=0.9, size = 1.0) +
+  #scale_color_manual(values=opts$colors) +
+  theme_classic() +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position="right",
+    legend.title=element_blank()
+  )
+p
+```
+
+### Questions
+
+-Can you visualize the mapped labels from the 10X atlas on the UMAP? Are there
+any preliminary insights you can see?
+```{r}
+p <- ggplot(to.plot, aes(x=V1,y=V2)) +
+  geom_point(aes(shape = stage, color = lineage10x_2), alpha=0.9, size = 1.0) +
+  #scale_color_manual(values=opts$colors) +
+  theme_classic() +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position="right",
+    legend.title=element_blank()
+  )
+p
+```
+
+
+## DNA methylation and accessibility layers
+
+The DNA methylation and accessibility data looks quite a bit different to the count matrices we see for RNA expression data. Again we will not perform the preprocessing here, but to give you an idea we will describe how the different steps work. The sequencing technique used is called [Bisulfite sequencing](https://en.wikipedia.org/wiki/Bisulfite_sequencing).  Briefly, bisulfite sequencing exploits the fact that bisulfite converts cytosine residues in the DNA to uracil, but only if they are unmethylated. This converts the epigenetic mark into a sequencable readout. Additionally, a technique called [NoMe](https://elifesciences.org/articles/23203) seq is used to gain accessibility information. Here an external Methyltransferase is introduced into cells, methylating accessible GpC sites. This signal can then also be picked up by Bisulfite sequencing.
+
+Since the alignment to the genome is complicated by the fact that some cytosines have to be converted, a special aligner (in this case Bismarck) has to be used. The tool then calls methylation at CpG and GpC sites in all cells. Here is an example of a typical raw dataset of a single cell (The accessibility data has the same format).
+
+### DNA methylation
+
+```{r}
+met_raw <- fread("gastrulation_data/met/cpg_level/E4.5-5.5_new_Plate1_A03.tsv.gz")
+met_raw
+```
+
+In the paper a descision was taken to binarize the data (i.e. representing each CpG/GpC site as methylated or unmethylated).
+
+Question: Take a look at the distribution of positive and negative reads. Can you see why the rate was binarized?
+
+```{r}
+hist(met_raw[, met_reads/(met_reads + nonmet_reads)])
+```
+Instead of our usual gene x cells count matrix, we are now working with a binary cell x CpG/GpC matrix for accessibility and methylation respectively. Additionally this matrix is extremely sparse. Have a look at [Supplementary Figure 1](https://www.nature.com/articles/s41586-019-1825-8#Fig5) from the paper. On average less than 1% of CpG sites are covered in any given cell. This means that it is very tough to make accurate assessments for single sites. For this reasons it is often more useful to aggregate methylation and accessibility information over known regulatory regions. Specifically we will be working with M-values, which are calculated as `log2(((mean_rate/100)+0.01)/(1-(mean_rate/100)+0.01))`. We have done this aggregation for a number of genomic regions. You can find them in `gastrulation_data/met/feature_level/`. Let's have a look at how this looks for DNAse hypersensitivity sites.
+
+```{r}
+met_dnase <- fread("gastrulation_data/met/feature_level/ESC_DHS.tsv.gz", select=c(1,2,5,6)) %>% 
+  setnames(c("id_met","id","N","rate"))
+# Keep only cells that pass the QC
+cells <- metadata[pass_metQC == TRUE, id_met]
+met_dnase <- met_dnase[id_met %in% cells]
+head(met_dnase)
+```
+In this table `id_met` corresponds to the cell_id, `id` is the identifier for the genomic region, `N` is the number of CpG sites that the signal is based on and `rate` is the mean methylation rate.
+Let's see how aggregating the individual signals affects the sparsity of the signal.
+
+```{r}
+hist(met_dnase$N)
+```
+
+Since the Signal is still very sparse, we need a simple way of doing dimensionality reduction that can handle missing values. Linear Bayesian Factor analysis (which is the basis for MOFA) will work well in these scenarios. However some preprocessing of the data has to be done first. This is similar to the preprocessing of RNAseq data.
+
+- We transform the `rate` value into `m` values to make them approximately normally distributed.
+- We filter out DNAse hypersensitivity sites that are covered by less than 10% of cells
+- We select only the 5000 most highly variable sites
+
+```{r}
+min_GpC = 5
+min_coverage = 0.10
+n_hv = 5000
+
+# Calculate M value from Beta value 
+met_dnase[,m:=log2(((rate/100)+0.01)/(1-(rate/100)+0.01))]
+
+# Filter features by coverage
+nsamples <- length(unique(met_dnase$id_met))
+met_dnase <- met_dnase %>% .[N >= min_GpC] %>% .[,cov:=.N/nsamples,by=id] %>%
+  .[cov>=min_coverage] %>% .[,c("cov"):=NULL]
+
+# Keep only highly variable sites
+keep_hv_sites <- met_dnase %>%
+  .[,.(var = var(rate)), by="id"] %>% 
+  .[var>0] %>% setorder(-var) %>%
+  head(n = n_hv) %>% .$id
+
+met_dnase <- met_dnase[id %in% keep_hv_sites]
+met_dnase
+```
+
+Now we can transform the data into matrix format to run dimensionality reduction.
+
+```{r}
+met_mat <- dcast(met_dnase, formula = id_met~id, value.var = "m") %>%
+  tibble::column_to_rownames("id_met") %>%
+  as.matrix %>% t
+
+met_mat[1:5, 1:5]
+```
+
+Now we can create a mofa object and run the model.
+
+```{r}
+
+MOFAobject <- createMOFAobject(list(met_mat))
+
+# Set options
+ModelOptions <- getDefaultModelOptions(MOFAobject)
+ModelOptions$numFactors <- 2
+
+TrainOptions <- getDefaultTrainOptions()
+TrainOptions$seed <- 42
+
+# Prepare
+MOFAobject <- prepareMOFA(MOFAobject,
+  ModelOptions = ModelOptions, 
+  TrainOptions = TrainOptions
+)
+
+# Train the model
+model <- runMOFA(MOFAobject)
+```
+Let's visualize the Factors
+
+```{r}
+metadata_plot <- metadata %>% setkey(id_met) %>%
+  .[sampleNames(model)]
+p <- plotFactorScatter(
+  model, 
+  factors = c("LF1","LF2"),
+  color_by = metadata_plot$stage
+  )
+p
+```
+
+Great! The methylation rate within DNAse hypersensitive sites is clearly distinguishing cells of different stages. This means there is some regulation that we can further explore. We were also able to reproduce Figure 1c from the paper. 
+
+Now we are going to incorporate the third layer of information: DNA accessibility. Since the data for accessibility comes from the same assay (only in GpC context) the processing is quite similar to the methylation data.
+
+### DNA accessibility
+
+Note: depending on how much memory you have available on your machine you might want to delete some of the files you no longer need.
+
+```{r}
+acc_dnase <- fread("gastrulation_data/acc/feature_level/ESC_DHS.tsv.gz", select=c(1,2,5,6)) %>% setnames(c("id_acc","id","N","rate"))
+# Keep only cells that pass the QC
+cells <- metadata[pass_accQC == TRUE, id_acc]
+acc_dnase <- acc_dnase[id_acc %in% cells]
+head(acc_dnase)
+```
+We run the same preprocessing with slightly different parameters that were empirically found to work well. Feel free to explore how changing these influences the result.
+
+```{r}
+min_coverage = 0.20
+n_hv = 10000
+
+# Calculate M value from Beta value 
+acc_dnase[,m:=log2(((rate/100)+0.01)/(1-(rate/100)+0.01))]
+
+# Filter features by coverage
+nsamples <- length(unique(acc_dnase$id_met))
+acc_dnase <- acc_dnase[,cov:=.N/nsamples,by=id] %>%
+  .[cov>=min_coverage] %>% .[,c("cov"):=NULL]
+
+# Keep only highly variable sites
+keep_hv_sites <- acc_dnase %>%
+  .[,.(var = var(rate)), by="id"] %>% 
+  .[var>0] %>% setorder(-var) %>%
+  head(n = n_hv) %>% .$id
+
+acc_dnase <- acc_dnase[id %in% keep_hv_sites]
+acc_dnase
+```
+
+```{r}
+acc_mat <- dcast(acc_dnase, formula = id_acc~id, value.var = "m") %>%
+  tibble::column_to_rownames("id_acc") %>%
+  as.matrix %>% t
+
+acc_mat[1:5, 1:5]
+```
+
+Now we can create a mofa object and run the model.
+
+```{r}
+
+MOFAobject <- createMOFAobject(list(acc_mat))
+
+# Set options
+ModelOptions <- getDefaultModelOptions(MOFAobject)
+ModelOptions$numFactors <- 2
+
+TrainOptions <- getDefaultTrainOptions()
+TrainOptions$seed <- 42
+
+# Prepare
+MOFAobject <- prepareMOFA(MOFAobject,
+  ModelOptions = ModelOptions, 
+  TrainOptions = TrainOptions
+)
+
+# Train the model
+model_acc <- runMOFA(MOFAobject)
+```
+Let's visualize the Factors
+
+```{r}
+metadata_plot <- metadata %>% setkey(id_acc) %>%
+  .[sampleNames(model_acc)]
+p <- plotFactorScatter(
+  model_acc, 
+  factors = c("LF1","LF2"),
+  color_by = metadata_plot$stage
+  )
+p
+```
+
+This plot is similar to Figure 1d in the paper.
+
+But what about other regions in the genome that could have regulatory effects? One good candidate are gene promoter regions, since their methylation will often have a direct silencing effect on gene expression. We have provided tables with different regulatory regions in `gastrulation_data/met/feature_level`. Feel free to explore different regulatory regions.
+
+We will now look at a specific example gene in more detail. Specifically we will explore the promoter epigenetics of Dppa4 in relation to its expression.
+
+```{r}
+gene_name <- "ENSMUSG00000058550"
+
+# Read promoter methylation for gene
+met_prom <- fread("gastrulation_data/met/feature_level/prom_2000_2000.tsv.gz") %>%
+  setnames(c("id_met", "gene", "anno", "Ntotal", "Nmet", "met_rate")) %>%
+  .[gene == gene_name,]
+
+# Read promoter accessibility for gene
+acc_prom <- fread("gastrulation_data/acc/feature_level/prom_2000_2000.tsv.gz") %>%
+  setnames(c("id_acc", "gene", "anno", "Ntotal", "Nacc", "acc_rate")) %>%
+  .[gene == gene_name,]
+
+# Merge together all 3 layers and metadata
+all_layers <- metadata %>%
+  .[, rna_expression := logcounts(sce)[gene_name,][id_rna]] %>%
+  merge(acc_prom[,c("id_acc", "acc_rate")], by = c("id_acc"), all.x = T) %>%
+  merge(met_prom[,c("id_met", "met_rate")], by = c("id_met"), all.x = T)
+  
+all_layers
+```
+
+```{r}
+plot_dt <- melt(all_layers, id.vars = c("sample", "stage"),
+                measure.vars = c("rna_expression", "acc_rate", "met_rate"),
+                variable.name = "Layer")
+plot_dt %>%
+  ggplot(aes(x = stage, y = value, color = Layer, fill = Layer)) +
+  geom_jitter() +
+  geom_violin(alpha = 0.3, color = "black") +
+  geom_boxplot(alpha = 0.3, width = 0.1, color = "black") +
+  facet_grid(Layer~., scales = "free_y") +
+  theme_classic() +
+  theme(legend.position = "none")
+```
+We reproduced panel 1h from the paper. Feel free to explore more genes on your own!
+
+
+
