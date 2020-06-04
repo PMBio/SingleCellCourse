@@ -1,16 +1,21 @@
+##Step 0.
 #Install Anaconda or miniconda
-#(information see:)
-#https://docs.anaconda.com/anaconda/install/
+#(information see: https://docs.anaconda.com/anaconda/install/)
 
+##Step 1.
+#After installation you will automatically load the base enviroment.
+#These instructions will install software in the "base" enviroment but you can also make a specific enviroment for the course.
+# To do so use: "conda create --name myenv" & "conda activate myenv" (myenv can be replaced with a name of choice)
+
+##Step 2.
 #Install R 4.0.0 (conda forge)
 conda install -c conda-forge r-base=4.0
 
+##Step 3.
+##install other dependancies within R!
 #Start R
 R
-
-##install other dependancies
-
-
+(within R)
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install(version = "3.11")
@@ -24,9 +29,10 @@ BiocManager::install("ggplot2")
 BiocManager::install("data.table")
 BiocManager::install("SingleCellExperiment")
 BiocManager::install("MOFA")
-
 install.packages('Seurat')
 
+##Step 4.
+#Please try and load the packages in R. 
 #Specifically for "Seurat" make sure you load the library at least once "library("Seurat")" and install the remaining dependancies via miniconda.
 
-#Done!
+##Done!
