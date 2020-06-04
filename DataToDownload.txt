@@ -1,0 +1,6 @@
+#Day1:
+
+#Day2:
+ftp://ftp.dkfz-heidelberg.de/outgoing/day_2_data
+
+#Day3:
