@@ -1,0 +1,32 @@
+#Install Anaconda or miniconda
+#(information see:)
+#https://docs.anaconda.com/anaconda/install/
+
+#Install R 4.0.0 (conda forge)
+conda install -c conda-forge r-base=4.0
+
+#Start R
+R
+
+##install other dependancies
+
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.11")
+
+BiocManager::install("scran")
+BiocManager::install("scater")
+BiocManager::install("umap")
+BiocManager::install("Rtsne")
+BiocManager::install("dplyr")
+BiocManager::install("ggplot2")
+BiocManager::install("data.table")
+BiocManager::install("SingleCellExperiment")
+BiocManager::install("MOFA")
+
+install.packages('Seurat')
+
+#Specifically for "Seurat" make sure you load the library at least once "library("Seurat")" and install the remaining dependancies via miniconda.
+
+#Done!
