@@ -1,4 +1,6 @@
 #Day1:
+ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data
+https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
 
 #Day2:
 ftp://ftp.dkfz-heidelberg.de/outgoing/day_2_data
