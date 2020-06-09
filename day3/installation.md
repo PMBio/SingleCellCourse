@@ -61,8 +61,12 @@ If all is fine skip this step, if the previous command gives you errors you can 
 * Now start R with `R`
 * Within R run
     ```
-    install.packages("remotes")
-    remotes::install_github("MarcElosua/SPOTlight")
+    install.packages("devtools")
+    devtools::install_github("satijalab/seurat", ref = "spatial")
+    devtools::install_github("https://github.com/MarcElosua/SPOTlight")
+    # if you can't install SPOTlight with the above command you can try using the two following ones
+    # install.packages("remotes")
+    # remotes::install_github("MarcElosua/SPOTlight")
     ```
 * Please check that you are able to load the `Seurat` and the `SPOTlight` packages, respectively with the commands `library(Seurat)` and `library(SPOTlight)`
 
