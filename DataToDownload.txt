@@ -24,4 +24,4 @@ https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered
 ftp://ftp.dkfz-heidelberg.de/outgoing/day_2_data
 
 #Day3:
-(ToBeShared)
+ftp://ftp.dkfz-heidelberg.de/outgoing/day_3_data
