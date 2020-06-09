@@ -44,6 +44,7 @@ install.packages('Seurat')
 #Please try and load the packages in R. 
 #Specifically for "Seurat" make sure you load the library at least once "library("Seurat")" and install the remaining dependancies via miniconda.
 
+##Step 5.
 Installation instructions here: https://github.com/PMBio/SingleCellCourse/blob/master/day3/installation.md
 
 ##Done!
