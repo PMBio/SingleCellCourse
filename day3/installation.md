@@ -63,12 +63,11 @@ If all is fine skip this step, if the previous command gives you errors you can 
     ```
     install.packages("devtools")
     devtools::install_github("satijalab/seurat", ref = "spatial")
-    devtools::install_github("https://github.com/MarcElosua/SPOTlight")
-    # if you can't install SPOTlight with the above command you can try using the two following ones
-    # install.packages("remotes")
-    # remotes::install_github("MarcElosua/SPOTlight")
+    devtools::install_github('satijalab/seurat-data')
     ```
-* Please check that you are able to load the `Seurat` and the `SPOTlight` packages, respectively with the commands `library(Seurat)` and `library(SPOTlight)`
+    
+* Please check that you are able to load the `Seurat` the package with the command `library(Seurat)`
 
 ### A software called Loupe Browser
 * 10x Genomics provides a software for exploration of Visium data, please [download it from here](https://support.10xgenomics.com/single-cell-gene-expression/software/visualization/latest/what-is-loupe-cell-browser)
+
