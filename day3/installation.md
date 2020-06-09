@@ -6,7 +6,6 @@ You will need
 * A conda environment for the Python part
 * A conda environment for the R part (they don't need to be separated, but in this way the changes of errors decrease)
 * A software called Loupe Browser
-* To download some data
 
 ### A conda environment for the Python part
 * It is required either [miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) or [anaconda](https://docs.anaconda.com/anaconda/install/), for Python >= 3.7
