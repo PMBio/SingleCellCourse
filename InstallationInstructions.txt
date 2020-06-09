@@ -37,6 +37,7 @@ BiocManager::install("ggplot2")
 BiocManager::install("data.table")
 BiocManager::install("SingleCellExperiment")
 BiocManager::install("MOFA")
+devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"))
 install.packages('Seurat')
 
 ##Step 4.
