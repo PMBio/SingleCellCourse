@@ -14,5 +14,3 @@ Within the practicum we will be reanalysing existing multi-omic single cell data
 * Experience in R/Python programming, and the use of bash.
 * Access to a Linux/Mac OS machine for practicals
 
-## Evaluation: 
-The course will be graded on the basis of an oral examination, on general questions and an article discussion.
