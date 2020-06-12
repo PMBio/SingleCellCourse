@@ -3,7 +3,7 @@
 #Please join the slack channel: https://join.slack.com/t/newworkspace-lkg2708/shared_invite/zt-ehprpqh3-MFjX3OQ0ucZOUUODbAbqDw 
 #Optionally: install the slack app: https://slack.com/intl/en-de/
 
-##For the tutorials: 
+##For the tutorials (day1-day2): 
 
 ##Step 0.
 #Install Anaconda or miniconda
