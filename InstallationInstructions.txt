@@ -1,6 +1,6 @@
 ##For the lecuters:
 #Please install ZOOM: https://zoom.us/download
-#Please join the slack channel: https://join.slack.com/t/newworkspace-lkg2708/shared_invite/zt-ehprpqh3-MFjX3OQ0ucZOUUODbAbqDw 
+#Please join the slack channel: https://join.slack.com/t/singlecellcoursehd/shared_invite/zt-pn61ha5c-GG0IMBiOWlo5mH4ZJjsCWA
 #Optionally: install the slack app: https://slack.com/intl/en-de/
 
 ##For the tutorials (day1-day2): 
@@ -16,8 +16,8 @@
 # If you create an enviroment please specify Python 3.7
 
 ##Step 2.
-#Install R 4.0.0 (conda forge)
-conda install -c conda-forge r-base=4.0
+#Install R 4 (conda forge)
+conda install -c conda-forge r-base=4
 
 ##Step 3.
 ##install other dependancies within R!
@@ -37,7 +37,7 @@ BiocManager::install("ggplot2")
 BiocManager::install("data.table")
 BiocManager::install("SingleCellExperiment")
 BiocManager::install("MOFA")
-devtools::install_github("bioFAM/MOFA2/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"))
+devtools::install_github("bioFAM/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"))
 install.packages('Seurat')
 
 ##Step 4.
