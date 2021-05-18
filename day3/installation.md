@@ -1,4 +1,4 @@
-# Single Cell Course 2020 - Day 3 practical
+# Single Cell Course 2021 - Day 3 practical
 Author: Luca Marconato, Ilia Kats
 
 ## installation
