@@ -43,6 +43,9 @@ This will create a virtual environment that will use your system's default Pytho
 Activate the environment with `source practical/bin/activate`.
 You can now install packages into the environment with `pip install package_name`.
 
+If Jupyter is installed globally (e.g. from your distribution's repositories), you need to enable it to see your new virtual environment.
+Run `python -m ipykernel install --user --name=practical` from within the virtual environment to do that.
+
 ### installing globally
 Use `pip install package_name`.
 This will install packages into your user directory, but without isolating different projects from each other.
