@@ -13,6 +13,7 @@ You will need the following packages from your repository of choice (PyPi/Conda/
 * `matplotlib`
 * `seaborn`
 * `anndata`
+* `napari`
 
 You will also need the development versions of some packages.
 These need to be installed with `pip`/`pip3`, even in a Conda environment, using `pip install git+repository_url`
@@ -26,7 +27,7 @@ These need to be installed with `pip`/`pip3`, even in a Conda environment, using
 Either [miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) or [anaconda](https://docs.anaconda.com/anaconda/install/) is required, with Python >= 3.7.
 If you didn't just install the latest version of conda you may encounter errors.
 In such a case please update miniconda/anaconda (e.g. by running `conda update --all`) or install the latest version.
-Open a terminal and create a conda environment with all the required libraries by running  `conda create -n day3_python python==3.9 numpy scipy pandas matplotlib seaborn anndata notebook -c anaconda -c conda-forge -c bioconda`.
+Open a terminal and create a conda environment with all the required libraries by running  `conda create -n day3_python python==3.9 numpy scipy pandas matplotlib seaborn anndata napari notebook -c anaconda -c conda-forge -c bioconda`.
 If you encounter errors you can try
 
 * Updading conda and then trying again the command above; to update conda use
