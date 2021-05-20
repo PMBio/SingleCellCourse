@@ -14,6 +14,7 @@ You will need the following packages from your repository of choice (PyPi/Conda/
 * `seaborn`
 * `anndata`
 * `napari`
+* `mofapy2` (you should have alredy installed this for day 2)
 
 You will also need the development versions of some packages.
 These need to be installed with `pip`/`pip3`, even in a Conda environment, using `pip install git+repository_url`
@@ -22,6 +23,7 @@ These need to be installed with `pip`/`pip3`, even in a Conda environment, using
 * `squidpy`: https://github.com/theislab/squidpy/
 * `SpatialDE`: https://github.com/ilia-kats/SpatialDE
 * `muon`: https://github.com/gtca/muon
+* `mofax`: https://github.com/bioFAM/mofax
 
 ### using Conda
 Either [miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) or [anaconda](https://docs.anaconda.com/anaconda/install/) is required, with Python >= 3.7.
