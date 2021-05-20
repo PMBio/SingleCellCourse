@@ -26,7 +26,7 @@ R
 (within R)
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install(version = "3.11")
+BiocManager::install(version = "3.12")
 
 BiocManager::install("scran")
 BiocManager::install("scater")
@@ -36,7 +36,7 @@ BiocManager::install("dplyr")
 BiocManager::install("ggplot2")
 BiocManager::install("data.table")
 BiocManager::install("SingleCellExperiment")
-BiocManager::install("MOFA")
+install.packages("devtools")
 devtools::install_github("bioFAM/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"))
 install.packages('Seurat')
 
