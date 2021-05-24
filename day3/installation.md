@@ -12,6 +12,7 @@ You will need the following packages from your repository of choice (PyPi/Conda/
 * `pandas`
 * `matplotlib`
 * `seaborn`
+* `jupyter`
 * `anndata`
 * `napari`
 * `mofapy2` (you should have alredy installed this for day 2)
