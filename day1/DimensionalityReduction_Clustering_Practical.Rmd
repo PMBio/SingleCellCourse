@@ -10,8 +10,18 @@ output:
 ---
 
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+colorize <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{%s}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'>%s</span>", color, 
+      x)
+  } else x
+}
 ```
 # Dimensionality reduction and clustering on scRNA-seq data
 
@@ -35,6 +45,7 @@ Let's start with including required libraries.
 ```
 
 ```{r convert, include=FALSE}
+ # /Applications/RStudio.app/Contents/MacOS/RStudio
   # here I am reading a SCE object and convert it to Seurat object
   #mgscsce <- readRDS('data/gastrulation/SingleCellExperiment.rds')
   #mgsc <- as.Seurat(mgscsce, counts = "counts", data = "logcounts", project = "mouse gastrulation") 
@@ -44,9 +55,9 @@ Let's start with including required libraries.
 
 ```
 
-In the previous practical, we have learned the essential preprocessing steps for working with scRNA-seq. Here we will start working with the preprocessed version of the mouse gastrulation scRNA-seq data in order to save time. We will load the pre-saved `Seurat` object of this data. 
+In the previous practical, we have learned the essential preprocessing steps for working with scRNA-seq. Here we will start working with the preprocessed version of the mouse gastrulation scRNA-seq data. We will load the pre-saved `Seurat` object of this data. 
 
-**Warning:** The pre-processed mouse gastrulation scRNA-seq Seurat object is quite large (\tilde 2GBs). I will show you how to choose a smaller subset from the original data, so that you are able to reproduce results fast. You can, however, work on the [original data](ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/mgsc.rds) if you want to practise what we learned today. The [meta-data](ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/sample_metadata.txt.gz) is also provided seperately. 
+**Warning:** The pre-processed mouse gastrulation scRNA-seq Seurat object is large (\tilde 2GBs). In today's practical, we will subset the data for fast computation. You can, however, work on the [original data](ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/mgsc.rds) if you want to practise what we learned today. The [meta-data](ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/sample_metadata.txt.gz) is provided seperately. 
 
 ```{r read}
     mgsc <- readRDS('data/gastrulation/mgsc.rds')
@@ -59,16 +70,16 @@ In the previous practical, we have learned the essential preprocessing steps for
     slotNames(mgsc)
 ```
 
-Now let us look at to the metadata table of this data which contains an overview of the samples. 
+Now let's look at to the metadata table of this dataset that contains an overview of the samples. 
 
 ```{r metadataadd}
     # see it is empty for now
     head(mgsc@meta.data, 5)
 
-    # now let's load the information to a table
+    # now let's load the metadata 
     metadata <- fread('data/gastrulation/sample_metadata.txt.gz') %>% .[stripped==FALSE & doublet==FALSE]
     
-    # and add  metadata  to our seurat object
+    # and add  the metadata  to our seurat object
     mgsc <- AddMetaData(mgsc, metadata = data.frame(metadata, row.names = metadata$cell))
     
     # now let's see once more
@@ -76,7 +87,7 @@ Now let us look at to the metadata table of this data which contains an overview
     
 ```
 
-Now we are able to see the annonations for each cell, e.g. cell types. There is also a column named `stage` column which shows the embryonic day the cells were sequenced. As our dataset is quite large, we will work on a subset of cells that belong to stage `E6.75` in order to speed up our response time. 
+Now we are able to see the annotations (e.g. cell type) for each cell. There is also a column named `stage` which shows the embryonic day the cells were sequenced. To speed up our experiments, we will work on a subset of cells that belong to stage `E6.75`. 
 
 ```{r subset}
     mgsc_subset <- mgsc[ , mgsc@meta.data$stage=='E6.75']
@@ -88,19 +99,21 @@ Now we are able to see the annonations for each cell, e.g. cell types. There is 
   
 ```
 
+This is where you are starting from! :) Now you can load [`mgsc_e675.rds`](ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/mgsc_e675.rds)  object to start working! Make sure that the object you loaded has same numbers of columns and rows with `E6.75` Seurat object.
 
-This is where you are starting from! :) Now you can go ahead and load [`mgsc_e675.rds`](ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/mgsc_e675.rds)  object to start working! Make sure that the object you loaded has same numbers of columns and rows with `E6.75` Seurat object.
+**Q1: Let's warm up! Can you try to subset cells in locations  $1, 23, 515$ and genes in locations $21, 44, 116$, respectively?** 
 
-**Q1:** Let's warm up! Can you try to subset cells in locations  $1, 23, 515$ and genes in locations $21, 44, 116$, respectively?
-
-
-```{r p1, echo=FALSE}
+<details>
+<summary>**Answer**</summary>
+```{r p1}
     s1 <- mgsc[, c(1,23,515)] # Subset to cells 1, 23, 515
     s2 <- mgsc[c(21,44,116), ] # Subset to genes 21, 44, 116 
     
     s1
     s2
 ```
+</details>
+
 
 We can use `rownames` and `colnames` to see the names of genes and cells. 
 
@@ -112,11 +125,15 @@ head(rownames(mgsc))
 head(colnames(mgsc))
 ```
 
-**Q2:** Observe the count data of the first 30 cells for genes "ENSMUSG00000051951" and "ENSMUSG00000033845". (` Hint:` use `GetAssayData` function. )
+**Q2: Observe the count data of the first 15 cells for genes "ENSMUSG00000051951" and "ENSMUSG00000033845". ** (` Hint:` use `GetAssayData` function. )
 
-```{r p3, echo=FALSE}
-GetAssayData(object = mgsc)[c("ENSMUSG00000051951", "ENSMUSG00000033845"), 1:30]
+<details>
+<summary>**Answer**</summary>
+```{r p3}
+GetAssayData(object = mgsc)[c("ENSMUSG00000051951", "ENSMUSG00000033845"), 1:15]
+# mgsc[c("ENSMUSG00000051951", "ENSMUSG00000033845"), 1:15]@assays$RNA@counts
 ```
+</details>
 
 The . values in the matrix represent $0$s. Since most values in an scRNA-seq matrix are $0$, Seurat uses a sparse-matrix representation to speed up calculations and reduce memory usage.
 
@@ -125,11 +142,14 @@ The . values in the matrix represent $0$s. Since most values in an scRNA-seq mat
 
 ## Feature selection: identification of highly variable features
 
-**Q3:** Our feature set (i.e. number of genes) are quite large! What kind of features do you think should be in the dataset?
+**Q3:Our feature set (i.e. number of genes) are quite large. What kind of features do you think should be in the dataset?** 
 
-<!-- We will choose a subset of features that have high cell-to-cell variation in the dataset (i.e, genes that are highly expressed in some cells, and lowly expressed in others) which can help highlighting biological signal. -->
+<details>
+<summary>**Answer**</summary>
+`r colorize("We will choose a subset of features that have high cell-to-cell variation in the dataset (i.e, genes that are highly expressed in some cells, and lowly expressed in others) which can help highlighting biological signal.", "red")` 
+</details>
 
-Seurat implements `FindVariableFeatures` to model the mean-variance relationship in single-cell data and returns 2000 features per dataset by default. We will use 1000 features to reduce computation time. 
+Seurat implements `FindVariableFeatures` to model the mean-variance relationship in single-cell data which reduces to dimensions to 2000 by default. We will update `nfeatures` argument to reduce dimensionality to 1000. 
 
 ```{r findvariable}
 mgsc <- FindVariableFeatures(mgsc, selection.method = "vst", nfeatures = 1000)
@@ -147,7 +167,7 @@ head(HVFInfo(mgsc)[VariableFeatures(mgsc), ], 5)
 
 ### Scaling the data 
 
-**Q4:** Seurat implements the `ScaleData` function to scale the data.  Do you remember why  we need this step?
+**Q4: Seurat implements the `ScaleData` function to scale the data.  Do you remember why we need this step?** 
 
 ```{r scale}
 mgsc <- ScaleData(mgsc) #Vector of features names to scale/center. Default is variable features.
@@ -157,17 +177,15 @@ The results are stored in` mgsc[["RNA"]]@scale.data`.
 
 ```{r scalehead} 
 mgsc[["RNA"]]@scale.data[1:5,1:5]
+# OR
+# mgsc@assays$RNA@scale.data[1:5,1:5]
 
 ```
 
 
-
-
 ## Principal Component Analysis
 
-We will `RunPCA` function of the Seurat. 
-
-**Q5:** Pay attention to the `features` argument. How many features will PCA work on?
+Let's use `RunPCA` function of the Seurat. Pay attention to the `features` argument. How many features will PCA work on?
 
 ```{r pca, message=FALSE, warning=FALSE}
 mgsc <- RunPCA(mgsc, npcs = 100, features = VariableFeatures(object = mgsc)) 
@@ -179,8 +197,17 @@ We can explore the constructed embeddings via  `mgsc@reductions`.
     slotNames(mgsc@reductions[["pca"]])
     dim(mgsc@reductions[["pca"]]@cell.embeddings)
     mgsc@reductions[["pca"]]@cell.embeddings[1:5,1:5]
+    # OR
+    # Embeddings(mgsc, reduction = "pca")[1:5, 1:5]
     
 ```
+
+**Q5: Do you remember what kind of information feature.loadings store? ** 
+
+<details>
+<summary>**Answer**</summary>
+`r colorize("feature.loadings: stores the weight for each feature along each dimension of the embedding.", "red")` 
+</details>
 
 ```{r pcaviz, message=FALSE, warning=FALSE}
 
@@ -189,32 +216,32 @@ We can explore the constructed embeddings via  `mgsc@reductions`.
   VizDimLoadings(mgsc, dims = 3:4, reduction = "pca")
 ```
 
-**Q6:** Generate the following output: three 2D plots with the first six PCs and print them side by side. i.e. PC1-PC2, PC3-PC4, PC5-PC6. Utilize `DimPlot` function of Seurat. 
-
-```{r pcaprint, echo=FALSE}
-  # (2) 
-  plot_grid(ncol = 3,
-    DimPlot(mgsc, reduction = "pca", dims = 1:2) + theme(legend.position="none"),
-    DimPlot(mgsc, reduction = "pca", dims = 3:4) + theme(legend.position="none"),
-    DimPlot(mgsc, reduction = "pca", dims = 5:6) + theme(legend.position="none") )
-```
-
 
 ### Determine the ‘dimensionality’ of the dataset
 
-**Q7:** Name that one method that we used to determine the dimensionality. Find the corresponding Seurat function and use it to print the following plot. How many dimensions do you suggest we keep?
+**Q6: Name that one method that we used to determine the dimensionality. Let's try to find out how much of the variance is explained by the PCs. ** (` Hint:` check `slotNames(mgsc@reductions[["pca"]])` which feature might help you with this. )
 
-```{r elbow, echo=FALSE}
+<details>
+<summary>**Answer**</summary>
+```{r elbow }
+percent <- 100*mgsc@reductions[["pca"]]@stdev^2/sum(mgsc@reductions[["pca"]]@stdev^2)
+
+perc_data <- data.frame(percent=percent, PC=1:length(percent))
+ggplot(perc_data, aes(x=PC, y=percent)) + 
+  geom_line(aes(y= percent), linetype=2) + 
+  scale_x_continuous(breaks=seq(from=0, to=80, by= 10)) +
+  geom_text(aes(label=round(percent, 2)), size=2, vjust=-.5) + 
+  ylim(0, 80)
+
+# OR you can directly use Seurat function 
 ElbowPlot(mgsc,  ndims = 80)
 ```
+</details>
 
-Another alternative is to use `JackStraw` function. Here is how Seurat defines it: 
+<!--
+Another alternative is to use `JackStraw` function to decide the number of dimensions. 
 
-> Randomly permutes a subset of data, and calculates projected PCA scores for these 'random' genes. Then compares the PCA scores for the 'random' genes with the observed PCA scores to determine statistical signifance. End result is a p-value for each gene's association with each principal component.
-
-**Q8:** According to this definition, how do you think we identify important PCs? 
-
-The JackStrawPlot function provides a visualization tool for comparing the distribution of p-values for each PC with a uniform distribution (dashed line). <!--‘Significant’ PCs will show a strong enrichment of features with low p-values (solid curve above the dashed line). --> 
+The `JackStrawPlot` function provides a visualization tool for comparing the distribution of p-values for each PC with a uniform distribution (dashed line). **Significant PCs** will show a strong enrichment of features with low p-values (solid curve above the dashed line). 
 
 
 ```{r jackstraw}
@@ -225,22 +252,40 @@ The JackStrawPlot function provides a visualization tool for comparing the distr
 
 This technique, however, might be time-consuming - especially for larger datasets. Elbow plot is a common practice for its speed. 
 
+--> 
+
+**Q7: Now it's time to visualize our data!  Generate the following output: three 2D plots with the first six PCs and print them side by side. i.e. PC1-PC2, PC3-PC4, PC5-PC6. ** (`Hint:` Utilize `DimPlot` and `plot_grid` functions.) 
+
+<details>
+<summary>**Answer**</summary>
+```{r pcaprint }
+  # (2) 
+  plot_grid(ncol = 3,
+    DimPlot(mgsc, reduction = "pca", dims = 1:2) + theme(legend.position="none"),
+    DimPlot(mgsc, reduction = "pca", dims = 3:4) + theme(legend.position="none"),
+    DimPlot(mgsc, reduction = "pca", dims = 5:6) + theme(legend.position="none") )
+```
+</details>
+
 
 ## Non-linear dimensional reduction (t-SNE/UMAP)
 
 ### t-SNE
 
-Seurat comprises `RunTSNE` which uses `Rtsne` library (which we previously worked with() as a default. 
+Seurat comprises `RunTSNE` which uses `Rtsne` library (which we previously worked with in the lecture). 
 
-```{r tsne, message=FALSE, warning=FALSE}
+```{r runtsne, message=FALSE, warning=FALSE}
 # we are using the PCA embeddings as our input
-mgsc <- RunTSNE(mgsc, dims = 1:30,  nthreads = 4, max_iter = 2000)
-DimPlot(mgsc, reduction = "tsne")
-
+mgsc <- RunTSNE(mgsc, reduction="pca", dims = 1:30,  nthreads = 4, max_iter = 2000)
 mgsc@reductions
 ```
 
-**Q9:** Do you remember one of the important hyper-parameters of t-SNE?  Print t-SNE plots using `DimPlot` and explore  how structure of the printed data changes with this parameter. Keep dimension as $30$. (` Hint:` `reduction.name` will help you save your embeddings that are produced by different algorithms. )
+```{r tsneplot, message=FALSE, warning=FALSE}
+DimPlot(mgsc, reduction = "tsne")
+
+```
+
+**Q8:Do you remember one of the important hyper-parameters of t-SNE?  Print t-SNE plots using `DimPlot` and explore  how structure of the printed data changes with this parameter. Keep dimension as $30$. ** (` Hint:` `reduction.name` will help you save your embeddings that are produced by different configurations. )
 
 
 ```{r tsneperp, echo=FALSE, message=FALSE,  warning=FALSE}
@@ -257,7 +302,6 @@ plot_grid(nrow=2, ncol = 2,
   DimPlot(mgsc, reduction = "tsne_p50")+ ggtitle(label ="p=50") + theme(legend.position="none")
 )
 
-
 ```
 
 
@@ -268,7 +312,7 @@ mgsc <- RunUMAP(mgsc, dims = 1:30)
 DimPlot(mgsc, reduction = "umap")
 ```
 
-**Q10:** How about the important parameters for UMAP? Print following UMAP plots using `DimPlot` and explore how structure of the printed data changes with these two parameters (you can print it for only one parameter). Choose dimensions between $1:50$.
+**Homework: How about the important parameters for UMAP? Print following UMAP plots using `DimPlot` and explore how structure of the visualized data changes with these two parameters. Choose dimensions between $1:30$. ** 
 
 ```{r umapneighbor, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -287,7 +331,7 @@ plot_grid(nrow=2, ncol = 2,
 ```
 
 
-**Homework:** Plot the projections of the dataset with three of the dimensionality reduction techniques printed side by side and explore `AugmentPlot`.
+**Homework: Plot the projections of the dataset with three of the dimensionality reduction techniques printed side by side and explore `AugmentPlot`. **
 
 ```{r compare, echo=FALSE}
     options(repr.plot.width=12, repr.plot.height=4)
@@ -309,7 +353,7 @@ plot_grid(nrow=2, ncol = 2,
 
 For our subset of time point E6.5, we have the cell type annotation information. Although this is not usually the case in many computational problems, i.e. we start without knowing (or having a very vague idea of) how many clusters we will end up. For now let's take advantage of the known annotations. 
 
-**Q11:** How many $real$ classes we have? Reproduce the following plots colored by cell type. ( `Hint:` You can make use `group.by` argument in `DimPlot` to extract stored cluster IDs.)
+**Q9: How many $real$ classes we have? Reproduce the following plots colored by cell type.** ( `Hint:` You can make use `group.by` argument in `DimPlot` to extract stored cluster IDs.)
 
 ```{r realclasses, echo=FALSE, message=FALSE, warning=FALSE}
     # length(unique(mgsc@meta.data$celltype))
@@ -318,6 +362,8 @@ For our subset of time point E6.5, we have the cell type annotation information.
     p1 <-DimPlot(mgsc, reduction = "umap", group.by = "celltype")+ggtitle("UMAP cell types") 
     p2 <-DimPlot(mgsc, reduction = "tsne", group.by = "celltype")+ggtitle("t-SNE cell type") + theme(legend.position="none")
     p1 + p2
+    
+    unique(mgsc@meta.data$celltype)
 ```
 
 
@@ -325,30 +371,34 @@ For our subset of time point E6.5, we have the cell type annotation information.
 
 Seurat does not support K-means? What are we going to do now!? :)
 
-**Q12:** Which elements do we need to perform $K-means$? Try to reproduce the following plot ($k=10$). ( `Hint:` Make use of `Embeddings` function or utilize `reductions` we previously used in the previous examples. You can save cluster IDs to `mgsc@meta.data` field. ) 
+**Q10: What do we need to run $K-means$? Try to reproduce the following plot where true classes are compared to k-means clusters ($k=13$).** ( `Hint:` Make use of `Embeddings` function or utilize `reductions` we previously used in the previous examples. You can save cluster IDs to `mgsc@meta.data` field. )
 
 
 ```{r kmeans, echo=FALSE}
 pc30 <- Embeddings(object = mgsc, reduction = "pca") [, 1:30]
-mgsc_kmeans <-kmeans(pc30,  iter.max = 100, centers=10)
+mgsc_kmeans <-kmeans(pc30,  iter.max = 100, centers=13)
 
 dim(pc30)
 # add clustering results to 'object@meta.data$kmeans.clusters'
 mgsc@meta.data$kmeans.clusters <- as.factor(mgsc_kmeans$cluster)
 
+p1 <- DimPlot(mgsc, reduction = "tsne", group.by = "celltype")+ggtitle("tSNE cell types") + theme(legend.position="none")
+p2 <- DimPlot(mgsc, reduction = "tsne", group.by = "kmeans.clusters", label=TRUE )+ggtitle("tSNE k-means clusters") + theme(legend.position="none")
 
-p1 <- DimPlot(mgsc, reduction = "pca", group.by = "kmeans.clusters", label=TRUE)
-p2 <- DimPlot(mgsc, reduction = "tsne", group.by = "kmeans.clusters", label=TRUE)
-p3 <- DimPlot(mgsc, reduction = "umap", group.by = "kmeans.clusters", label=TRUE)
-p1 + p2 + p3
+p3 <- DimPlot(mgsc, reduction = "umap", group.by = "celltype")+ggtitle("UMAP cell types") + theme(legend.position="none")
+p4 <- DimPlot(mgsc, reduction = "umap", group.by = "kmeans.clusters", label=TRUE)+ggtitle("UMAP k-means clusters") + theme(legend.position="none")
+
+plot_grid(nrow=2, ncol = 2, 
+          p1, p2, 
+          p3, p4)
 
 ```
 
-Now let's see how clusters change if you use t-SNE embeddings as an input to k-means algorithm.
+**Homework: Explore how clusters would have changed if you used t-SNE embeddings instead of PCA as an input to k-means algorithm.**
 
 ```{r kmeanstsne, echo=FALSE}
 tsne2 <- Embeddings(object = mgsc, reduction = "tsne") 
-mgsc_kmeans <-kmeans(tsne2,  iter.max = 100, centers=10)
+mgsc_kmeans <-kmeans(tsne2,  iter.max = 100, centers=13)
 
 dim(tsne2)
 # add clustering results to 'object@meta.data$kmeans.clusters'
@@ -365,13 +415,13 @@ p1 + p2 + p3
 
 ### How many clusters should we choose?
 
-Do you remember our example from the lecture? Which $k$-means outcome did we look at the to decide number of clusters? 
+We already know the number of cell-types in our data. But this is not always the case. How would we decide the number of clusters if we didn't know the number of classes?  Which $k$-means feature did we look at the to decide number of clusters? 
 
-**Q13:** Print the following plot using the same embeddings in the previous example. (`Hint:` Lecture notes:)) 
+**Homework: Print the following plot using the same embeddings from the previous example. **  (`Hint:` Lecture notes:))
 
 ```{r clusternum, echo=FALSE}
     wss_ <- list() 
-    clus <- seq(4, 64, by=4)
+    clus <- seq(4, 40, by=4)
     
     for (k in 1:length(clus)) {
         m_kmeans <- kmeans(pc30, iter.max = 100, centers=clus[k])
@@ -391,7 +441,7 @@ Can we decide the number of clusters looking at this plot?
 
 Seurat does not support hierarchical clustering too? But we can do it!! 
 
-**Q14:** Which elements do we need to perform hierarchical clustering? Try to reproduce the following dendogram. Use `Euclidian` as distance metric and `ward.D2` as linkage method. 
+**Q11:Which elements do we need to perform hierarchical clustering? Try to reproduce the following dendogram. Use `Euclidian` as distance metric and `ward.D2` as linkage method. **  
 
 
 ```{r hclust, echo=FALSE}
@@ -403,21 +453,23 @@ plot(mgsc_hce, cex = 0.6, hang = -1, main='mgsc cluster dendogram')
 
 ```
 
-**Q15:** How about we print different clustering outcomes with $k=10, 20, 40$ using t-SNE? 
+Looking at the dendogram, we can investigate different numbers of clusters using `cutree` function that cuts the hierarchical clustering tree  into given number of clusters. 
+
+**Q12: How about we print different clustering outcomes with $k=4, 8, 16$ using t-SNE? **
 
 
 ```{r hclustplot, echo=FALSE}
 #euclidean distance
-mgsc@meta.data$hce_10 <- cutree(mgsc_hce,k = 10)
-mgsc@meta.data$hce_15 <- cutree(mgsc_hce,k = 15)
-mgsc@meta.data$hce_20 <- cutree(mgsc_hce,k = 20)
+mgsc@meta.data$hce_4 <- cutree(mgsc_hce,k = 4)
+mgsc@meta.data$hce_8 <- cutree(mgsc_hce,k = 8)
+mgsc@meta.data$hce_16 <- cutree(mgsc_hce,k = 16)
 
 options(repr.plot.width=21, repr.plot.height=5)
 
 plot_grid(ncol = 3,
-  DimPlot(mgsc, reduction = "tsne", group.by = "hce_10", label=TRUE)+ggtitle("k=10"),
-  DimPlot(mgsc, reduction = "tsne", group.by = "hce_15", label=TRUE)+ggtitle("k=15"),
-  DimPlot(mgsc, reduction = "tsne", group.by = "hce_20", label=TRUE)+ggtitle("k=20"))
+  DimPlot(mgsc, reduction = "tsne", group.by = "hce_4", label=TRUE)+ggtitle("k=4"),
+  DimPlot(mgsc, reduction = "tsne", group.by = "hce_8", label=TRUE)+ggtitle("k=8"),
+  DimPlot(mgsc, reduction = "tsne", group.by = "hce_16", label=TRUE)+ggtitle("k=16"))
 ```
 
 
@@ -425,9 +477,11 @@ plot_grid(ncol = 3,
 
 Seuratv3 adopts a graph-based clustering methodology much similar to PhenoGraph approach we discussed earlier.
 
-`FindNeighbors ` function performs the first steps: (1) build a kNN graph using Euclidean distance in PCA space and (2) update the edge weights based on the shared neighbors (Jaccard index) to construct a Shared Nearest Neighbor (SNN) graph. 
+`FindNeighbors ` function performs the following steps: 
+* (1) build a kNN graph using Euclidean distance in PCA space
+* (2) update the edge weights based on the shared neighbors (Jaccard index) to construct a Shared Nearest Neighbor (SNN) graph. 
 
-Once the graph is constucted, we can use  `FindClusters ` function  to apply a community detection algorithm to identify subgroups. Remember that, Seurat uses the Louvain algorithm as a default for this step.
+Once the graph is constucted, we can use  `FindClusters ` function  to apply a community detection algorithm to identify subgroups. Keep in mind that Seurat uses the Louvain algorithm as a default for this step.
 
 
 ```{r snn, message=FALSE, warning=FALSE}
