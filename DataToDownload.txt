@@ -14,9 +14,9 @@ Alternatively you can use a Gui like FileZilla
 #Tutorial 1:
 https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
 #Tutorial 2:
-#E6.75: ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/mgsc_e675.rds
-#meta-data (optional): ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/sample_metadata.txt.gz
-#Full data (optional): ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/mgsc.rds (edited)
+#E6.75: ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/mgsc_e675.rds
+#meta-data:  ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/sample_metadata.txt.gz
+#Full data (optional): ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/mgsc.rds
 
 #Day2:
 mkdir gastrulation_data
