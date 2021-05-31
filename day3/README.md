@@ -17,4 +17,7 @@ Practical workshop
 - Analysis of Visium and MERFISH data in Python
 
 
-[Installation instructions](installation.md)
+Instructions
+- [Installation instructions](installation.md)
+- Downloading Visium data: follow either the instructions in the [analysis notebook](mouse_brain.ipynb) or use the dedicated [Visium download script](visium_downloader.sh)
+- Downloading MERFISH data: use the dedicated [MERFISH download script](merfish_downloader.sh)
