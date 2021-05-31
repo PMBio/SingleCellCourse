@@ -1,11 +1,11 @@
 ---
-title: "Batch correctionusing Seurat"
+title: "Batch correction using Seurat"
 author: "Britta Velten"
-date: "5/26/2020"
-output: html_document
+date: "06/01/2021"
+output: BiocStyle::html_document
 ---
 
-Following the tutorial provided by Seurat we will integrate human pancreatic islet cells profiled by different technologies.
+Following the [tutorial provided by Seurat (v3)](https://satijalab.org/seurat/v3.1/integration.html) we will integrate human pancreatic islet cells profiled by different technologies.
 
 # Getting the data
 ```{r, warning=FALSE, message=FALSE}
@@ -20,7 +20,7 @@ pancreas.list <- SplitObject(panc8, split.by = "tech")
 pancreas.list <- pancreas.list[c("celseq", "celseq2", "fluidigmc1", "smartseq2")]
 ```
 
-# Just for illustration: Data without integration
+# Data visualization before integration
 ```{r}
 panc8 <- NormalizeData(panc8)
 panc8 <- FindVariableFeatures(panc8)
@@ -31,7 +31,7 @@ DimPlot(panc8, group.by = "tech", reduction = "umap")
 DimPlot(panc8, group.by ="celltype", reduction = "umap")
 ```
 
-# Data normalization
+# Data normalization per batch
 ```{r}
 for (i in 1:length(pancreas.list)) {
     pancreas.list[[i]] <- NormalizeData(pancreas.list[[i]], verbose = FALSE)
@@ -40,7 +40,7 @@ for (i in 1:length(pancreas.list)) {
 }
 ```
 
-# Integration
+# Integration of batches
 ```{r}
 reference.list <- pancreas.list[c("celseq", "celseq2", "smartseq2")]
 pancreas.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 1:30)
@@ -50,9 +50,9 @@ pancreas.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 
 pancreas.integrated <- IntegrateData(anchorset = pancreas.anchors, dims = 1:30)
 ```
 
-# Plotting after integration
+# Data vizualization after integration
 
-```{r}
+```{r, fig.width=10}
 library(ggplot2)
 library(cowplot)
 library(patchwork)
@@ -70,4 +70,6 @@ p2 <- DimPlot(pancreas.integrated, reduction = "umap", group.by = "celltype", la
 p1 + p2
 ```
 
+
+For further details have also a look at the more extended Seurat (v4) tutorial including various downstream analyses on the integrated data: https://satijalab.org/seurat/articles/integration_introduction.html.
 
