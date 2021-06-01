@@ -13,5 +13,5 @@ Lectures on
 
 Practical workshop
 
-- Overview of scNMT data analysis
+- [Overview of scNMT data analysis](https://raw.githack.com/PMBio/SingleCellCourse/master/day2/scNMT_gastrulation_overview.html)
 - [Analysis of scNMT data with MOFA](https://raw.githack.com/PMBio/SingleCellCourse/master/day2/MOFA_scNMT_tutorial.html)
