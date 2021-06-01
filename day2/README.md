@@ -4,6 +4,7 @@
 
 Lectures on
 
+- Pseudotime
 - Batch correction
 - Multi-omics methods
 - Multi-omics Factor analyis (MOFA)
