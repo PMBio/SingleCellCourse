@@ -4,6 +4,7 @@
 
 Lectures on
 
+- Pseudotime
 - Batch correction
 - Multi-omics methods
 - Multi-omics Factor analyis (MOFA)
@@ -13,4 +14,4 @@ Lectures on
 Practical workshop
 
 - Overview of scNMT data analysis
-- Analysis of scNMT data with MOFA
+- [Analysis of scNMT data with MOFA](https://raw.githack.com/PMBio/SingleCellCourse/master/day2/MOFA_scNMT_tutorial.html)
