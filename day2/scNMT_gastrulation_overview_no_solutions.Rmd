@@ -407,7 +407,7 @@ p + scale_color_manual(values = stage_colors_met)
 
 Great! The methylation rate within DNAse hypersensitive sites is clearly distinguishing cells of different stages. This means there is some regulation that we can further explore. We were also able to get similar results to Figure 1c from the paper. 
 
-### Dimensionality reduction of methylome
+### Dimensionality reduction of accessibility
 
 ```{r}
 acc_dnase <- fread(paste0(workdir, "gastrulation_data/acc/feature_level/ESC_DHS_clean.tsv.gz"))
