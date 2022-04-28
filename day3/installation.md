@@ -18,13 +18,13 @@ You will need the following packages from your repository of choice (PyPi/Conda/
 * `pyqt5`
 * `mofapy2` (you should have alredy installed this for day 2)
 * `scanpy`
-* `squidpy`
 * `muon`
 
 You will also need the development versions of some packages.
 These need to be installed with `pip`/`pip3`, even in a Conda environment, using `pip install git+repository_url`
 
 * `SpatialDE`: https://github.com/ilia-kats/SpatialDE
+* `squidpy`: https://github.com/theislab/squidpy
 * `mofax`: https://github.com/bioFAM/mofax
 * `cell2location`: https://github.com/BayraktarLab/cell2location
 
