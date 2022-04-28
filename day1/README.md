@@ -6,5 +6,5 @@
 
 ## Afternoon:
    * Lecture: Low dimensional embedding & clustering analysis (contd.)
-   * Practical: Seurat introduction with 10X scRNA-seq 
+   * Practical: (Seurat introduction with 10X scRNA-seq)[https://github.com/PMBio/SingleCellCourse/blob/master/day1/Seurat_tutorial_intro.pdf] 
    * Practical: Hands on exercise on Seurat with Mouse Gastrulation data
