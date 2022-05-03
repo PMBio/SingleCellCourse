@@ -1,6 +1,6 @@
 ##For the lecuters:
 #Please install ZOOM: https://zoom.us/download
-#Please join the slack channel: https://join.slack.com/t/singlecellcoursehd/shared_invite/zt-pn61ha5c-GG0IMBiOWlo5mH4ZJjsCWA
+#Please join the slack channel: <See email>
 #Optionally: install the slack app: https://slack.com/intl/en-de/
 
 ##For the tutorials (day1-day2): 
@@ -26,7 +26,7 @@ R
 (within R)
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install(version = "3.12")
+BiocManager::install(version = "3.14")
 
 BiocManager::install("scran")
 BiocManager::install("scater")
@@ -37,8 +37,7 @@ BiocManager::install("ggplot2")
 BiocManager::install("data.table")
 BiocManager::install("biomaRt")
 BiocManager::install("SingleCellExperiment")
-install.packages("devtools")
-devtools::install_github("bioFAM/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"))
+BiocManager::install("MOFA2")
 install.packages('Seurat')
 
 ##Step 4.

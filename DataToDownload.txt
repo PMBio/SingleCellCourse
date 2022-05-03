@@ -19,9 +19,14 @@ https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered
 #Full data (optional): ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/mgsc.rds
 
 #Day2:
-mkdir gastrulation_data
-cd gastrulation_data
-ftp://ftp.dkfz-heidelberg.de/outgoing/SCCourse2021/day_2_data/
+
+##Manually:
+https://hub.dkfz.de/s/QkqTwi8BrgcRgFE/download
+
+##Command line:
+cd day2
+wget https://hub.dkfz.de/s/QkqTwi8BrgcRgFE/download -O gastrulation_data.zip
+unzip gastrulation_data.zip
 
 #Day3:
 https://hub.dkfz.de/s/HEaCoDNqozPwJ8p

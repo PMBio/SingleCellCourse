@@ -4,10 +4,10 @@
 
 Lectures on
 
-- Pseudotime
-- Batch correction
-- Multi-omics methods
+- Integrating cells from different batches (RNAseq)
+- Single cell multi-omics & strategies for integrative analysis
 - Multi-omics Factor analyis (MOFA)
+- Pseudo-time, Gaussian processes, two sample test
 
 ## Afternoon
 
