@@ -1,6 +1,6 @@
 ##For the lecuters:
 #Please install ZOOM: https://zoom.us/download
-#Please join the slack channel: https://join.slack.com/t/singlecellcoursehd/shared_invite/zt-pn61ha5c-GG0IMBiOWlo5mH4ZJjsCWA
+#Please join the slack channel: <See email>
 #Optionally: install the slack app: https://slack.com/intl/en-de/
 
 ##For the tutorials (day1-day2): 
