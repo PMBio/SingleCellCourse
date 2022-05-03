@@ -14,9 +14,9 @@ Alternatively you can use a Gui like FileZilla
 #Tutorial 1:
 https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
 #Tutorial 2:
-#E6.75: ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/mgsc_e675.rds
-#meta-data:  ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/sample_metadata.txt.gz
-#Full data (optional): ftp://ftp.dkfz-heidelberg.de/outgoing/course_material_day_1/mgsc.rds
+#E6.75: https://hub.dkfz.de/s/Da9iHMQQzYAqBcA
+#meta-data:  https://hub.dkfz.de/s/6XB5LT8MeGf644w
+#Full data (optional): https://hub.dkfz.de/s/mWcE2NDcMpS8ozx
 
 #Day2:
 
