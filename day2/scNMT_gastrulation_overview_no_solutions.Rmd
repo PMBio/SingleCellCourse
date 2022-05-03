@@ -6,14 +6,14 @@ output:
   BiocStyle::html_document:
     toc: true
 ---
-First we need to download the data. We provide a subset of the full raw data. It is about 2.6 GB in size. Please set your working directory to where you stored this vignette and make sure that enough disk space is available.
+First we need to download the data. We provide a subset of the full raw data. It is about 1 GB in size. Please set your working directory to where you stored this vignette and make sure that enough disk space is available.
 ```{r}
-workdir <- "/home/max/Desktop/sccourse/day_2/" # Change to directory where this vignette is stored
+workdir <- "./" # Change to directory where this vignette is stored
 knitr::opts_knit$set(root.dir = workdir)
 ```
 
 ```{r}
-#system("curl ...")
+#system("wget https://hub.dkfz.de/s/QkqTwi8BrgcRgFE/download -O gastrulation_data.zip")
 #system("unzip gastrulation_data.zip -d gastrulation_data")
 ```
 
@@ -57,7 +57,7 @@ As you have heard, scNMT-seq allows the simultaneous profiling of transcriptome,
 
 In particular we will be working with the data from the following study: [Multi-omics profiling of mouse gastrulation at single-cell resolution](https://www.nature.com/articles/s41586-019-1825-8). This study sequenced mouse embryonic stem cells as they undergo the process of gastrulation, during which the three primary germ layers are formed. 
 
-[From: Multi-omics profiling of mouse gastrulation at single-cell resolution](figure1.png)
+[From: Multi-omics profiling of mouse gastrulation at single-cell resolution](fig1.png)
 
 Later on we will use MOFA to analyze the three layers together, but in this tutorial we just want to get an overview of each layer separately. This should  make it clear how the data of each layer looks like and how each of the layers changes over the course of mouse development. We will also reproduce some of the panels in Figure 1 of the paper. Note that the plots will not exactly match the figures since we are using slightly different tools and preprocessing strategies.
 

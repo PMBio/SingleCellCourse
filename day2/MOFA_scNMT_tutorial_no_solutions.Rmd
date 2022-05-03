@@ -54,7 +54,7 @@ As input to the model we quantified DNA methylation and chromatin accessibility 
 Note that for this tutorial we selected the MOFA Factors that explained at least 1% of variation in the RNA expression. The trained model can be found here [ftp://ftp.dkfz-heidelberg.de/outgoing/SCCourse2021/day_2_data/MOFAmodel.rds](ftp://ftp.dkfz-heidelberg.de/outgoing/SCCourse2021/day_2_data/MOFAmodel.rds).
 
 ```{r}
-MOFAobject <- readRDS("day_2_data/MOFAmodel.rds")
+MOFAobject <- readRDS("gastrulation_data/MOFAmodel.rds")
 # MOFAobject <- readRDS(url("ftp://ftp.dkfz-heidelberg.de/outgoing/SCCourse2021/day_2_data/MOFAmodel.rds"))
 MOFAobject
 ```
