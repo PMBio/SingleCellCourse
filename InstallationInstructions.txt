@@ -17,7 +17,7 @@
 
 ##Step 2.
 #Install R 4 (conda forge)
-conda install -c conda-forge r-base=4
+conda install -c conda-forge r-base=4 r-curl
 
 ##Step 3.
 ##install other dependancies within R!
