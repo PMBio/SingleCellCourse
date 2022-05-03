@@ -28,8 +28,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install(version = "3.14")
 
-BiocManager::install("scran")
-BiocManager::install("scater")
+BiocManager::install("knitr")
 BiocManager::install("umap")
 BiocManager::install("Rtsne")
 BiocManager::install("dplyr")
@@ -38,7 +37,7 @@ BiocManager::install("data.table")
 BiocManager::install("biomaRt")
 BiocManager::install("SingleCellExperiment")
 BiocManager::install("MOFA2")
-install.packages('Seurat')
+install.packages("Seurat")
 
 ##Step 4.
 #Please try and load the packages in R. 
