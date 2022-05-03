@@ -28,6 +28,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install(version = "3.14")
 
+install.packages("R.utils")
 BiocManager::install("knitr")
 BiocManager::install("umap")
 BiocManager::install("Rtsne")
