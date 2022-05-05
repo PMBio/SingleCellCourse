@@ -9,10 +9,14 @@ This course provides insights into the latest developments in single cell biolog
 
 Within the practicum we will be reanalysing existing multi-omic single cell data, to get hands on experience working with the data. 
 
-## Slides:
- https://drive.google.com/drive/u/0/folders/1avKF1szaex_6E-yO64Zr6u0_qjMTA1X3
+## Slides & Material:
+ https://drive.google.com/drive/u/0/folders/1QRHqVTlkZpRmXx52DDS6JPaiBRyuFLu7
+ 
 ## Prerequisites:
 
 * Experience in R/Python programming, and the use of bash.
 * Access to a Linux/Mac OS machine for practicals
 
+
+##Optional
+VM: https://drive.google.com/file/d/1x9UNpiUfTe2GqXX4jsen6zxyglyTY6UC/view?usp=sharing
