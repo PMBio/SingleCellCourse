@@ -12,18 +12,31 @@ You will need the following packages from your repository of choice (PyPi/Conda/
 * `pandas`
 * `matplotlib`
 * `seaborn`
+* `jupyter`
 * `anndata`
 * `napari`
+* `pyqt5`
 * `mofapy2` (you should have alredy installed this for day 2)
+* `scanpy`
+* `muon`
 
 You will also need the development versions of some packages.
 These need to be installed with `pip`/`pip3`, even in a Conda environment, using `pip install git+repository_url`
 
-* `scanpy`: https://github.com/theislab/scanpy
-* `squidpy`: https://github.com/theislab/squidpy/
 * `SpatialDE`: https://github.com/ilia-kats/SpatialDE
-* `muon`: https://github.com/gtca/muon
+* `squidpy`: https://github.com/theislab/squidpy
 * `mofax`: https://github.com/bioFAM/mofax
+* `cell2location`: https://github.com/BayraktarLab/cell2location
+
+---
+
+Note: Currently, there are some incompatibilities between packages when using Python 3.10.
+This is due to the fact that the latest NumPy version is 1.22, but numba is not yet compatible with it and requires NumPy 1.21.
+However, some other packages using the NumPy C API have been compiled against 1.22 already and are not compatible with 1.21.
+Older versions of some of these packages (e.g. tables) are not compatible with Python 3.10.
+In conclusion, at this moment you probably want to use Python 3.9 and you may have to manually massage some versions if you find that packages raise exceptions upon import.
+
+---
 
 ### using Conda
 Either [miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) or [anaconda](https://docs.anaconda.com/anaconda/install/) is required, with Python >= 3.7.

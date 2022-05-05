@@ -1,6 +1,6 @@
 ##For the lecuters:
 #Please install ZOOM: https://zoom.us/download
-#Please join the slack channel: https://join.slack.com/t/singlecellcoursehd/shared_invite/zt-pn61ha5c-GG0IMBiOWlo5mH4ZJjsCWA
+#Please join the slack channel: <See email>
 #Optionally: install the slack app: https://slack.com/intl/en-de/
 
 ##For the tutorials (day1-day2): 
@@ -17,7 +17,7 @@
 
 ##Step 2.
 #Install R 4 (conda forge)
-conda install -c conda-forge r-base=4
+conda install -c conda-forge r-base=4 r-curl r-rgeos
 
 ##Step 3.
 ##install other dependancies within R!
@@ -26,23 +26,33 @@ R
 (within R)
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install(version = "3.12")
+BiocManager::install(version = "3.14")
 
-BiocManager::install("scran")
-BiocManager::install("scater")
+install.packages("R.utils")
+BiocManager::install("knitr")
 BiocManager::install("umap")
 BiocManager::install("Rtsne")
 BiocManager::install("dplyr")
 BiocManager::install("ggplot2")
 BiocManager::install("data.table")
+BiocManager::install("biomaRt")
 BiocManager::install("SingleCellExperiment")
-install.packages("devtools")
-devtools::install_github("bioFAM/MOFA2", build_opts = c("--no-resave-data --no-build-vignettes"))
-install.packages('Seurat')
+BiocManager::install("MOFA2")
+install.packages("Seurat")
 
 ##Step 4.
 #Please try and load the packages in R. 
 #Specifically for "Seurat" make sure you load the library at least once "library("Seurat")" and install the remaining dependancies via miniconda.
+
+#Also please check if mofa is installed correctly by running the following in R:
+#This runs mofa with test data and makes sure that the environment is set up correctly (warnings are fine here)
+
+library(MOFA2)
+data <- make_example_data(n_views = 2, n_samples = 200, n_features = 1000, n_factors = 10)[[1]]
+MOFAobject <- create_mofa(data)
+MOFAobject <- prepare_mofa(object = MOFAobject)
+run_mofa(MOFAobject)
+
 
 ##Step 5.
 # To install the dependencies for the day3 please follow the instructions here: https://github.com/PMBio/SingleCellCourse/blob/master/day3/installation.md

@@ -14,14 +14,19 @@ Alternatively you can use a Gui like FileZilla
 #Tutorial 1:
 https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
 #Tutorial 2:
-#E6.75: ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/mgsc_e675.rds
-#meta-data (optional): ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/sample_metadata.txt.gz
-#Full data (optional): ftp://ftp.dkfz-heidelberg.de/outgoing/day_1_data/mgsc.rds (edited)
+#E6.75: https://hub.dkfz.de/s/Da9iHMQQzYAqBcA
+#meta-data:  https://hub.dkfz.de/s/6XB5LT8MeGf644w
+#Full data (optional): https://hub.dkfz.de/s/mWcE2NDcMpS8ozx
 
 #Day2:
-mkdir gastrulation_data
-cd gastrulation_data
-ftp://ftp.dkfz-heidelberg.de/outgoing/SCCourse2021/day_2_data/
+
+##Manually:
+https://hub.dkfz.de/s/QkqTwi8BrgcRgFE/download
+
+##Command line:
+cd day2
+wget https://hub.dkfz.de/s/QkqTwi8BrgcRgFE/download -O gastrulation_data.zip
+unzip gastrulation_data.zip
 
 #Day3:
-ftp://ftp.dkfz-heidelberg.de/outgoing/day_3_data
+https://hub.dkfz.de/s/HEaCoDNqozPwJ8p

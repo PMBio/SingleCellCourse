@@ -1,3 +1,5 @@
+day2/gastrulation_data
+
 .DS_Store
 
 # History files
@@ -25,3 +27,4 @@ env.bak/
 venv.bak/
 
 .ipynb_checkpoints
+
