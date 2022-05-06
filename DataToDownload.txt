@@ -29,4 +29,5 @@ wget https://hub.dkfz.de/s/QkqTwi8BrgcRgFE/download -O gastrulation_data.zip
 unzip gastrulation_data.zip
 
 #Day3:
-https://hub.dkfz.de/s/HEaCoDNqozPwJ8p
+Visium data: https://hub.dkfz.de/s/HEaCoDNqozPwJ8p
+MERFISH data: https://www.dropbox.com/sh/wfxjdi24safkbvy/AAChmwFZyhJSGkRTUe_a0rPaa?dl=0
