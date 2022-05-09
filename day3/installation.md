@@ -15,7 +15,7 @@ You will need the following packages from your repository of choice (PyPi/Conda/
 * `jupyter`
 * `anndata`
 * `napari`
-* `pyqt5`
+* `PyQt5`
 * `mofapy2` (you should have alredy installed this for day 2)
 * `scanpy`
 * `muon`
