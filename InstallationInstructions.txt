@@ -13,7 +13,6 @@
 #After installation you will automatically load the base enviroment.
 #These instructions will install software in the "base" enviroment but you can also make a specific enviroment for the course.
 # To do so use: "conda create --name myenv" & "conda activate myenv" (myenv can be replaced with a name of choice)
-# If you create an enviroment please specify Python 3.7
 
 ##Step 2.
 #Install R 4 (conda forge)

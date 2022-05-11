@@ -1,0 +1,251 @@
+---
+title: "Computational single-cell biology course"
+author: "Marc Jan Bonder (m.bonder@dkfz.de) and Hakime Öztürk (h.oeztuerk@dkfz-heidelberg.de)"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+    BiocStyle::pdf_document:    
+     #code_download: true
+     toc: yes
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+colorize <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{%s}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'>%s</span>", color, 
+      x)
+  } else x
+}
+```
+# Dimensionality reduction and clustering on scRNA-seq data (hands-on)
+
+>  We will work on scRNA-seq data of mouse gastrulation and early organogenesis from [Pijuan-Sala et al., 2019](https://www.nature.com/articles/s41586-019-0933-9). [This Shiny application](https://marionilab.cruk.cam.ac.uk/MouseGastrulation2018/)  provides an interactive interface that allows users to validate their own analysis on this data. You can reach the original data and related scripts from the [Github page](https://github.com/MarioniLab/EmbryoTimecourse2018).
+
+Gastrulation is a phase early in the embryonic development of most animals, during which the single-layered blastula is reorganized into a multilayered structure known as the gastrula [(Wikipedia, 2020-06-02)](https://en.wikipedia.org/wiki/Gastrulation). 
+
+
+## Getting familiar with the pre-processed data
+
+Let's start with including required libraries. 
+```{r libraries}
+  suppressPackageStartupMessages({
+  library(Seurat)
+  library(ggplot2)
+  library(dplyr)
+  library(data.table)
+  library(cowplot)
+  set.seed(1)
+})
+```
+
+```{r convert, include=FALSE}
+ # /Applications/RStudio.app/Contents/MacOS/RStudio
+  # reading a SCE object and converting it to Seurat object
+  #mgscsce <- readRDS('data/gastrulation/SingleCellExperiment.rds')
+  #mgsc <- as.Seurat(mgscsce, counts = "counts", data = "logcounts", project = "mouse gastrulation") 
+  
+  # saving it as Seurat object
+  #saveRDS(mgsc, file = "data/gastrulation/mgsc.rds")
+
+```
+
+In the previous practical, we have learned the essential preprocessing steps for working with scRNA-seq. Here we will start working with the preprocessed version of the mouse gastrulation scRNA-seq data. We will load the pre-saved `Seurat` object of this data. 
+
+**Warning:** The pre-processed mouse gastrulation scRNA-seq Seurat object is large (~2GBs). In today's practical, we will subset the data for fast computation. You can, however, work on the [original data](https://hub.dkfz.de/s/mWcE2NDcMpS8ozx) for additional practices. The [meta-data](https://hub.dkfz.de/s/6XB5LT8MeGf644w) is provided seperately. 
+
+```{r read}
+    mgsc <- readRDS('~/Documents/mgsc_e675.rds')
+    mgsc
+```   
+  **Reminder:** 
+  
+  * number of rows = genes = features,
+  * number of columns = cells = samples
+
+```{r slot}    
+    # let's see the available slots
+    slotNames(mgsc)
+```
+
+Now let's look at to the metadata table of the dataset that contains an overview of the samples. 
+
+```{r metadataadd}
+    # see it is empty for now
+    head(mgsc@meta.data, 5)
+
+    # now let's load the metadata 
+    metadata <- fread('~/Documents/sample_metadata.txt.gz') %>% .[stripped==FALSE & doublet==FALSE]
+    
+    # and add  the metadata  to our seurat object
+    mgsc <- AddMetaData(mgsc, metadata = data.frame(metadata, row.names = metadata$cell))
+    
+    # now let's see once more
+    head(mgsc@meta.data, 5)
+    
+```
+
+Now we are able to see the annotations (e.g. cell type) for each cell. There is also a column named `stage` which shows the embryonic day the cells were sequenced. To speed up our experiments, we will work on a subset of cells that belong to stage `E6.75`. 
+
+```{r subset}
+    mgsc_subset <- mgsc[ , mgsc@meta.data$stage=='E6.75']
+    mgsc_subset
+    # now lets save this subset
+    saveRDS(mgsc_subset, file = "~/Documents/mgsc_e675_v2.rds")
+    
+    mgsc <- mgsc_subset
+  
+```
+
+This is where you are starting from! :) Make sure to download  [`mgsc_e675.rds`](https://hub.dkfz.de/s/Da9iHMQQzYAqBcA)  if you haven't already. 
+
+
+# TASK 1: Pre-processing
+
+**1.1: Let's load the mgsc_e675 data and take look at the distribution of the features to observe whether there are remaining outliers. ** 
+
+
+```{r readdata, echo=FALSE}
+mgsc <- readRDS('~/Documents/mgsc_e675_v2.rds')
+mgsc
+
+VlnPlot(mgsc, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
+```
+
+
+
+**1.2: Now let's plot the most variable features and annotate top5 most variable genes. Scale the data aftwerwards. ** 
+
+
+```{r findvariable, echo=FALSE}
+mgsc <- FindVariableFeatures(mgsc, selection.method = "vst")
+options(repr.plot.width=12, repr.plot.height=6)
+
+# Identify the 5 most highly variable genes
+top5 <- head(VariableFeatures(mgsc), 5)
+
+# plot variable features 
+plot1 <- VariableFeaturePlot(mgsc)
+LabelPoints(plot = plot1, points = top5, repel = TRUE,  xnudge = 0, ynudge = 0)
+
+head(HVFInfo(mgsc)[VariableFeatures(mgsc), ], 5)
+
+mgsc <- ScaleData(mgsc) #Vector of features names to scale/center. Default is variable features.
+```
+
+
+
+It might be possible that instead of gene symbols, we get our genes with Ensemble GeneIDs. In that case we will need to map to gene symbols first. 
+
+```{r}
+library(biomaRt)
+ensembl <- useMart("ensembl", dataset="mmusculus_gene_ensembl", host = "http://www.ensembl.org")
+annot<-getBM(c("ensembl_gene_id", "mgi_symbol", "chromosome_name", "strand", "start_position", "end_position","gene_biotype"), mart=ensembl)
+
+```
+
+**1.3: Print out the gene names of the top10 variable genes.  ** (`Hint:` you can make use of `match()` function. )
+
+```{r, echo=FALSE}
+top10 <- head(VariableFeatures(mgsc), 10)
+annot$mgi_symbol[match(top10, annot$ensembl_gene_id)]
+
+```
+
+
+**1.4: Apply PCA and determine the dimensionality.  Generate the following output: three 2D plots with the first six PCs and print them side by side. i.e. PC1-PC2, PC3-PC4, PC5-PC6. **
+
+
+```{r pca, message=FALSE, warning=FALSE, echo=FALSE}
+mgsc <- RunPCA(mgsc, npcs = 100, features = VariableFeatures(object = mgsc)) 
+
+plot_grid(ncol = 3,
+    DimPlot(mgsc, reduction = "pca", dims = 1:2) + theme(legend.position="none"),
+    DimPlot(mgsc, reduction = "pca", dims = 3:4) + theme(legend.position="none"),
+    DimPlot(mgsc, reduction = "pca", dims = 5:6) + theme(legend.position="none") )
+
+ElbowPlot(mgsc,  ndims = 80)
+```
+
+
+
+**1.5. Plot the projections of the dataset with three of the dimensionality reduction techniques printed side by side. Use UMAP with n.neighbors=20, min.dist=0.7 and tSNE with perplexity=15. Use first 10 PCs.  **
+
+```{r compare, echo=FALSE}
+    options(repr.plot.width=12, repr.plot.height=4)
+
+    mgsc <- RunTSNE(mgsc, dims = 1:10, perplexity=20, reduction.name = "tsne_p15", 
+                    nthreads = 4, max_iter = 2000)
+    mgsc <- RunUMAP(mgsc, dims = 1:10, n.neighbors=20, min.dist = 0.7, reduction.name = "UMAP_n20", )
+    
+    p1 <- DimPlot(mgsc, reduction = "tsne_p15", pt.size = 0.2) + ggtitle(label = "t-SNE (p=15)") 
+    p2 <- DimPlot(mgsc, reduction = "UMAP_n20", pt.size = 0.2) + ggtitle(label = "UMAP")
+    p3 <- DimPlot(mgsc, reduction = "pca", pt.size = 0.2) + ggtitle(label = "PCA")
+    
+    p1 <- AugmentPlot(plot = p1 )
+    p2 <- AugmentPlot(plot = p2 )
+    p3 <- AugmentPlot(plot = p3 )
+    (p1 + p2 + p3) & NoLegend()
+```
+
+
+
+# TASK 2: Cluster cells
+
+For our subset of time point ` E6.75`, the original meta-data stores the assigned cell type annotation information. 
+
+**2.1: How many clusters did the original study identify? Reproduce the following plots colored by annotated cell types.** ( `Hint:` You can make use `group.by` argument in `DimPlot` to extract stored cluster IDs.)
+
+```{r realclasses, echo=FALSE, message=FALSE, warning=FALSE}
+    # length(unique(mgsc@meta.data$celltype))
+    
+    options(repr.plot.width=14, repr.plot.height=6)
+    p1 <-DimPlot(mgsc, reduction = "UMAP_n20", group.by = "celltype")+ggtitle("UMAP cell types") 
+    p2 <-DimPlot(mgsc, reduction = "tsne_p15", group.by = "celltype")+ggtitle("t-SNE cell type")  + theme(legend.position="none")
+    p1 + p2
+    
+    unique(mgsc@meta.data$celltype)
+```
+
+**2.2: Now let's use Seurat's graph-based clustering to identify the clusters and observe whether we can reproduce the above conclusion. Use first 30 PCs and 10 nearest neighbors for resolutions r=0.1, 0.5, 1. ** 
+
+Hint: The output of FindClusters is saved in `mgsc meta.data$seurat_clusters`. This resets each time clustering is performed. You can use `Idents` function of Seurat to save cluster ids. 
+
+```{r snn, message=FALSE, warning=FALSE}
+mgsc <- FindNeighbors(mgsc,  k.param = 20, dims = 1:50, reduction = "pca")
+mgsc <- FindClusters(mgsc, resolution = 0.5)
+mgsc[["snn_05"]] <- Idents(object = mgsc)
+mgsc <- FindClusters(mgsc, resolution = 0.1)
+mgsc[["snn_01"]] <- Idents(object = mgsc)
+mgsc <- FindClusters(mgsc,  resolution = 1)
+mgsc[["snn_1"]] <- Idents(object = mgsc)
+
+
+plot_grid(nrow=1, ncol = 3,
+  DimPlot(mgsc, reduction = "UMAP_n20", group.by = "snn_01", label=TRUE)+ggtitle("SNN res=0.1"),
+  DimPlot(mgsc, reduction = "UMAP_n20", group.by = "snn_05", label=TRUE)+ggtitle("SNN res=0.5, default"),
+  DimPlot(mgsc, reduction = "UMAP_n20", group.by = "snn_1", label=TRUE)+ggtitle("SNN res=1")
+  )
+```
+
+
+
+**2.3: Let's find the markers of the cluster 1. Investigate the first two markers and find out gene names of the top 10.** 
+
+```{r, echo=FALSE}
+# finding all markers of cluster 1
+cluster1.markers <- FindMarkers(mgsc, ident.1 = 1, min.pct = 0.25)
+
+```
+
+
+Note that the original study does not employ `Seurat` but `scran` and `Scanpy` packages, therefore it's expected that we might have slightly different results.
+
+```{r, echo=FALSE}
+VlnPlot(mgsc, features = rownames(cluster1.markers)[1:2])
+top3_clus1 <-  rownames(cluster1.markers)[1:10]
+annot$mgi_symbol[match(top3_clus1, annot$ensembl_gene_id)]
+```

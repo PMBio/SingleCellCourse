@@ -1,0 +1,374 @@
+---
+title: "Computational single-cell biology course"
+author: "Marc Jan Bonder (m.bonder@dkfz.de) and Hakime Öztürk (h.oeztuerk@dkfz-heidelberg.de)"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+    BiocStyle::html_document:    
+     #code_download: true
+     toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Dimensionality reduction and clustering on scRNA-seq data
+
+## Seurat object setup
+
+```{r, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(Seurat)
+library(patchwork)
+```
+
+
+We will use Seurat's example dataset of Peripheral Blood Mononuclear Cells (PBMC) available from 10X Genomics. Please download the raw data from [here](https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz). Once you download the data, you need to extract it in a folder of your choice.
+
+```
+tar -xvf pbmc3k_filtered_gene_bc_matrices.tar 
+```
+
+Seurat function `Read10X` can be used to read the data from the 10x output. 
+
+```{r}
+pbmc.data <- Read10X(data.dir = './R_wd/data/pbmc3k/filtered_gene_bc_matrices/hg19')
+```
+
+We can create a Seurat object by calling the `CreateSeuratObject()` function. We need to provide the arguments such as "counts" matrix, the name of the "project" and state thresholds for filtering the data based on some properties if necessary. 
+
+`min.cells`: the minimum number of cells that needs to be present for the feature (i.e. gene) to not to be filtered out from the dataset.
+
+`min.features` : the minimum number of features that need to be detected for a cell to not to be filtered out. 
+
+```{r}
+pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", 
+                                  min.cells = 3, min.features = 200)
+pbmc
+```
+
+
+We can use `rownames` and `colnames` to see the names of genes and cells. 
+
+```{r p2}
+# rownames = gene names
+head(rownames(pbmc))
+
+# colnames = sample/cell names
+head(colnames(pbmc))
+```
+
+
+**Q1: Let's warm up! Observe the count data of the first 40 cells for genes "FAM132A", "RBP7" and "TP53". ** (` Hint:` use `GetAssayData` function. )
+
+<details>
+<summary>**Answer**</summary>
+```{r p3}
+GetAssayData(object = pbmc)[c("FAM132A", "RBP7", "TP53"), 1:40]
+
+## or
+
+# pbmc.data[c("FAM132A", "RBP7", "TP53"), 1:40]
+```
+</details>
+
+The . values in the matrix represent $0$s. Since most values in an scRNA-seq matrix are $0$, Seurat uses a sparse-matrix representation to speed up calculations and reduce memory usage.
+
+## Pre-processing the data
+
+### QC (filtering low quality samples)
+
+One very common practice is to check the percentage of mithocondrial genes per cell. Cells with high numbers of mithocondrial genes are considered to be under stress and hence are low quality. 
+
+If we are working with gene symbols, mithocondrial gene names start by "MT-".
+
+```{r}
+pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, pattern = "^MT-")
+```
+
+Once we calculated the mithocondrial percentage, it will be stored as a feature in the Seurat object to which we can refer later. 
+
+We can check the distribution of different features accross cells visually.
+* the number of genes expressed in the count matrix
+* the total counts per cell
+* the percentage of counts in mitochondrial genes
+
+```{r}
+VlnPlot(pbmc, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+```
+
+
+We might want to consider filtering out cells that deviate from the majority of cells (**outlier**) in the distribution of a given feature. Thresholds for these are dataset dependant. 
+
+**Q2: Let's use `subset()` function to remove outlier cells based on boolean conditions (e.g. &, |) and generate the below plot aftering filtering. Conditions are given below. ** 
+
+```{r}
+minFeature_RNA <- 200 
+maxFeature_RNA <- 2500
+maxMTpercent <-5
+```
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+pbmc <- subset(pbmc, 
+              subset = nFeature_RNA > minFeature_RNA & nFeature_RNA < maxFeature_RNA & 
+                        percent.mt < maxMTpercent)
+
+VlnPlot(pbmc, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+```
+</details>
+
+### Normalization
+
+Seurat applies a global-scaling normalization method `LogNormalize` that normalizes the feature expression measurements for each cell by the total expression, multiplies this by a scale factor (10,000 by default), and log-transforms the result.
+
+**Q3: Do you remember why we use log transformation?** 
+<details>
+<summary>**Answer**</summary>
+To reduce the skewness in their distribution and/or to further regress technical variation.
+
+
+</details>
+
+
+```{r}
+pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+```
+
+`scTransform` is an alternative function to log normalization in recent Seurat versions.
+
+```{r}
+#pbmc <- SCTransform(pbmc, vars.to.regress = "percent.mt", verbose = FALSE)
+```
+
+
+### Feature selection
+
+**Q4: Our feature set (i.e. number of genes) is large. What kind of features do you think should be in the dataset?** 
+
+<details>
+<summary>**Answer**</summary>
+We will choose a subset of features that have high cell-to-cell variation in the dataset (i.e, genes that are highly expressed in some cells, and lowly expressed in others) which can help highlighting biological signal. 
+
+
+</details>
+
+Seurat implements `FindVariableFeatures` to model the mean-variance relationship in single-cell data which reduces to dimensions to 2000 by default. 
+
+```{r}
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures =2000)
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(pbmc), 10)
+
+plot1 <- VariableFeaturePlot(pbmc)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot2
+```
+
+### Scaling
+
+**Q5: Seurat implements the `ScaleData` function to scale the data.  Do you remember why we need this step?** 
+
+<details>
+<summary>**Answer**</summary>
+Scaling the data means to transform the gene expression distributions to become z-distributions which will have a mean= 0 and standard deviation = 1.  This step prevents highly-expressed genes to dominate the downstream analysis. 
+
+
+</details>
+
+```{r}
+all.genes <- rownames(pbmc)
+pbmc <- ScaleData(pbmc, features = all.genes)
+
+# OR
+# pbmc <- ScaleData(pbmc)
+```
+
+### Dimensionality reduction (feature extraction)
+
+Next step is to compute principal components of our data. We can use all genes or a subset of them to compute them. In this case we use the variable genes that we detected before.
+
+
+```{r, message= FALSE}
+pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
+pbmc[["pca"]]
+```
+
+```{r}
+DimPlot(pbmc, reduction = "pca")
+```
+
+We can visually inspect the genes that correlate the most with the PCs both positively and negatively.
+
+```{r}
+DimHeatmap(pbmc, dims = 1:6, cells = 500, balanced = TRUE)
+```
+
+
+**Q6: Name the method that we use to determine the dimensionality. Let's try to find out how much of the variance is explained by the PCs. ** (` Hint:` check `slotNames(pbmc@reductions[["pca"]])` to find the feature might help you with this or name of the method itself can be helpful. )
+
+<details>
+<summary>**Answer**</summary>
+
+```{r elbow}
+percent <- 100*pbmc[["pca"]]@stdev^2/sum(pbmc[["pca"]]@stdev^2)
+
+perc_data <- data.frame(percent=percent, PC=1:length(percent))
+ggplot(perc_data, aes(x=PC, y=percent)) + 
+  geom_line(aes(y= percent), linetype=2) + 
+  scale_x_continuous(breaks=seq(from=0, to=30, by= 10)) +
+  geom_text(aes(label=round(percent, 2)), size=2, vjust=-.5) + 
+  ylim(0, 30)
+
+# OR you can directly use Seurat function 
+# ElbowPlot(pbmc,  ndims = 80)
+```
+</details>
+
+
+We can order principal components according to their eigen values or standard deviation. We want to keep those PCs that explain an important proportion of variability in the data. 
+
+## Clustering the cells
+
+### Graph-based clustering
+
+Seurat adopts a graph-based clustering methodology much similar to `PhenoGraph` approach we discussed earlier.
+
+`FindNeighbors` function performs the following steps: 
+
+* (1) build a kNN graph using Euclidean distance in PCA space
+* (2) update the edge weights based on the shared neighbors (Jaccard index) to construct a Shared Nearest Neighbor (SNN) graph. 
+
+Afterwards, we can use  `FindClusters ` function  to apply a community detection algorithm to identify subgroups. Keep in mind that Seurat uses the Louvain algorithm as a default for this step.
+
+`FindClusters ` has a resolution parameter that sets the `granularity` of the downstream clustering, with increased values leading to a greater number of clusters.  
+
+The Seurat authors suggest that  `granularity values` between 0.4-1.2 usually return good results for sc datasets of around 3K cells. For larger datasets, optimal resolution often increases for larger datasets. 
+
+
+```{r}
+pbmc <- FindNeighbors(pbmc, dims = 1:10)
+pbmc <- FindClusters(pbmc, resolution = 0.5)
+```
+
+Based on our PCA analysis we would keep 10 components. The problem with that is that we can't visualize the PCA data from this 10 dimensions in an easy way. 
+
+We can now rely of non-linear visualization methods to summarize the PCs in 2/3 dimensions that can be easily visualized. 
+
+```{r}
+pbmc <- RunTSNE(pbmc, dims = 1:10)
+```
+
+
+```{r}
+pbmc <- RunUMAP(pbmc, dims = 1:10)
+```
+
+We plot the data for the two embeddings and we show the clusters as they were detected on the PCA data. 
+
+```{r}
+plot1 <- DimPlot(pbmc, reduction = "tsne", label=TRUE ) +
+           ggtitle("tSNE SNN clusters") 
+plot2 <- DimPlot(pbmc, reduction = "umap", label=TRUE ) + 
+           ggtitle("UMAP SNN clusters")  
+plot1 + plot2
+```
+
+```{r}
+saveRDS(pbmc, file = './R_wd/data/pbmc3k/pbmc3k_tutorial_out1.rds')
+```
+
+### K-means clustering
+
+Seurat does not support K-means? What are we going to do now!? :)
+
+**Q7: What do we need to run $K-means$? Let's try to visualize the clusters identified by $K-means$ given $k=9$.** ( `Hint:` Make use of `Embeddings` function or utilize `reductions` we previously used in the previous examples (e.g. 30 PCs). You can save cluster IDs to `pbmc@meta.data` field. )
+
+<details>
+<summary>**Answer**</summary>
+
+```{r kmeans}
+pc30 <- Embeddings(object = pbmc, reduction = "pca") [, 1:30]
+mgsc_kmeans <-kmeans(pc30,  iter.max = 100, centers=9)
+
+dim(pc30)
+# add clustering results to 'object@meta.data$kmeans.clusters'
+pbmc@meta.data$kmeans.clusters <- as.factor(mgsc_kmeans$cluster)
+head(pbmc@meta.data)
+head(Idents(pbmc))
+
+p1 <- DimPlot(pbmc, reduction = "tsne", group.by = "kmeans.clusters", label=TRUE ) + 
+            ggtitle("tSNE k-means clusters") 
+            #theme(legend.position="none")
+
+p2 <- DimPlot(pbmc, reduction = "umap", group.by = "kmeans.clusters", label=TRUE)+ 
+              ggtitle("UMAP k-means clusters")
+              #theme(legend.position="none")
+
+p1 + p2
+
+```
+<details>
+
+## Differentially expressed features (cluster bio-markers)
+
+Seurat identifies positive and negative markers of a single cluster (specified in ident.1), compared to all other cells.  `FindAllMarkers`  automates this process for all clusters, but you can also test groups of clusters vs. each other, or against all cells with  `FindMarkers`.
+
+The  `min.pct` argument requires a feature to be detected at a minimum percentage in either of the two groups of cells.
+
+
+```{r}
+# finding all markers of cluster 3
+cluster3.markers <- FindMarkers(pbmc, ident.1 = 3, min.pct = 0.25)
+head(cluster3.markers, n = 5)
+```
+
+* p_val : p_val (unadjusted)
+* avg_log2FC : log fold-change of the average expression between the two groups. Positive values indicate that the feature is more highly expressed in the first group.
+* pct.1 : The percentage of cells where the feature is detected in the first group
+* pct.2 : The percentage of cells where the feature is detected in the second group
+* p_val_adj : Adjusted p-value, based on Bonferroni correction using all features in the dataset.
+
+
+We can plot the genes we identified in the previous step across all clusters in our data.
+```{r}
+VlnPlot(pbmc, features = rownames(cluster3.markers)[1:3])
+```
+
+We can also observe the expression distribution of the genes in the low dimensional embeddings.
+
+```{r}
+FeaturePlot(pbmc, features = rownames(cluster3.markers)[1:3])
+```
+
+Let's find the gene markers for all clusters.
+```{r}
+pbmc.markers <- FindAllMarkers(pbmc, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+pbmc.markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_log2FC)
+```
+
+We can plot the top 10 markers per cluster.
+
+```{r}
+top10 <- pbmc.markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC)
+DoHeatmap(pbmc, features = top10$gene) + NoLegend()
+```
+
+### Cell type identification of clusters
+
+Based on the markers we found, we can rename our clusters to meaningful names. For this dataset, canonical markers match the unbiased clustering to known cell types:
+
+```{r}
+new.cluster.ids <- c("Naive CD4 T", "Memory CD4 T", "CD14+ Mono", "B", "CD8 T", "FCGR3A+ Mono", 
+    "NK", "DC", "Platelet")
+names(new.cluster.ids) <- levels(pbmc)
+pbmc <- RenameIdents(pbmc, new.cluster.ids)
+DimPlot(pbmc, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
+```
+
+```{r}
+saveRDS(pbmc, file = './R_wd/data/pbmc3k/pbmc3k_tutorial_out2.rds')
+```

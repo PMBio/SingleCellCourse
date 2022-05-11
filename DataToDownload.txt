@@ -3,10 +3,6 @@
 ##Instructions:
 Choose a place on your computer with at least 1GB of space.
 
-```
-wget -r -nH --cut-dirs=3 ftp://ftp.dkfz-heidelberg.de//outgoing/day_*_data/
-```
-Alternatively you can use a Gui like FileZilla
 
 ##Links to data:
 
@@ -14,6 +10,8 @@ Alternatively you can use a Gui like FileZilla
 #Tutorial 1:
 https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
 #Tutorial 2:
+
+##Manually:
 #E6.75: https://hub.dkfz.de/s/Da9iHMQQzYAqBcA
 #meta-data:  https://hub.dkfz.de/s/6XB5LT8MeGf644w
 #Full data (optional): https://hub.dkfz.de/s/mWcE2NDcMpS8ozx
@@ -29,4 +27,14 @@ wget https://hub.dkfz.de/s/QkqTwi8BrgcRgFE/download -O gastrulation_data.zip
 unzip gastrulation_data.zip
 
 #Day3:
-https://hub.dkfz.de/s/HEaCoDNqozPwJ8p
+##Manually:
+Visium data: https://hub.dkfz.de/s/HEaCoDNqozPwJ8p
+MERFISH data: https://www.dropbox.com/sh/wfxjdi24safkbvy/AAChmwFZyhJSGkRTUe_a0rPaa?dl=0
+
+
+Wget example:
+
+```
+wget -r -nH --cut-dirs=3 https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
+```
+Alternatively you can use a Gui like FileZilla
