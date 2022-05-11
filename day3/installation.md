@@ -42,7 +42,8 @@ In conclusion, at this moment you probably want to use Python 3.9 and you may ha
 Either [miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) or [anaconda](https://docs.anaconda.com/anaconda/install/) is required, with Python >= 3.7.
 If you didn't just install the latest version of conda you may encounter errors.
 In such a case please update miniconda/anaconda (e.g. by running `conda update --all`) or install the latest version.
-Open a terminal and create a conda environment with all the required libraries by running  `conda create -n day3_python python==3.9 numpy scipy pandas matplotlib seaborn anndata napari notebook -c anaconda -c conda-forge -c bioconda`.
+Open a terminal and create a conda environment with all the required libraries by running  `conda create -n day3_python python==3.9 numpy scipy pandas matplotlib seaborn anndata napari notebook scanpy -c anaconda -c conda-forge -c bioconda`.
+
 If you encounter errors you can try
 
 * Updading conda and then trying again the command above; to update conda use
@@ -50,6 +51,27 @@ If you encounter errors you can try
 When you don't get any more errors install the left-out packages with pip (the specific pip command is package dependent, please search online)
 
 Finally, activate the conda environment with `conda activate day3_python` and install additional packages with `pip` as described above.
+#### Speeding up things with Mamba
+A trick to speed up the creating of conda environment and the installation of conda packages is to use mamba for the those tasks. Then you can continue using conda normally for activating the env, deleting it, etc..
+
+#### Complete code 
+Run this from your `base` conda environment for installing mamba:
+`conda install -c conda-forge mamba`
+
+Then run the create command by replacing `conda` with `mamba`:
+`mamba create -n day3_python python==3.9 numpy scipy pandas matplotlib seaborn anndata napari notebook scanpy -c anaconda -c conda-forge -c bioconda`
+
+Proceeed as normally.
+`conda activate day3_python`
+
+These packages need to be installed from pip as they are not available via conda.
+pip install muon mofapy2
+
+These packages need to be installed from Github
+`pip install git+https://github.com/ilia-kats/SpatialDE`
+`pip install git+https://github.com/theislab/squidpy`
+`pip install git+https://github.com/bioFAM/mofax`
+`pip install git+https://github.com/BayraktarLab/cell2location`
 
 ### using virtualenv
 First, install the `virtualenv` package globally.
